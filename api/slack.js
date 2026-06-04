@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).end();
 
-  const WEBHOOK = 'https://hooks.slack.com/services/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';
+  const WEBHOOK = 'https://hooks.slack.com/services/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';
 
   try {
     const response = await fetch(WEBHOOK, {
