@@ -10,16 +10,18 @@ export default async function handler(req, res) {
   try {
     let body = req.body;
     if (typeof body === 'string') body = JSON.parse(body);
-    if (!body || !body.text) {
-      return res.status(400).json({ ok: false, error: 'No text provided' });
-    }
+    
+    const text = (body && body.text) 
+      ? body.text 
+      : '⚽ *Katapult World Cup Pool 2026* — Daily update\n👉 https://world-cup-pool-nu.vercel.app';
+
     const response = await fetch(WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: body.text }),
+      body: JSON.stringify({ text }),
     });
-    const text = await response.text();
-    res.status(200).json({ ok: true, slack: text });
+    const result = await response.text();
+    res.status(200).json({ ok: true, slack: result });
   } catch (e) {
     res.status(500).json({ ok: false, error: e.message });
   }
