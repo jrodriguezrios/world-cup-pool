@@ -324,6 +324,19 @@ select option{background:white;}
 .login-or{text-align:center;font-size:11px;color:var(--text3);margin:10px 0;position:relative;}
 .login-or::before,.login-or::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border2);}
 .login-or::before{left:0;}.login-or::after{right:0;}
+
+/* ── REPORT MODAL ── */
+.report-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9000;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s;}
+.report-modal{background:white;border-radius:20px;padding:2rem;max-width:420px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.2);animation:slideUp .25s;}
+.report-modal-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;color:var(--accent);margin-bottom:4px;}
+.report-modal-sub{font-size:13px;color:var(--text2);margin-bottom:1.2rem;}
+.report-opt{width:100%;padding:14px 16px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:all .15s;text-align:left;}
+.report-opt:hover{border-color:var(--accent);background:rgba(0,61,165,0.05);}
+.report-opt-icon{font-size:24px;flex-shrink:0;}
+.report-opt-title{font-size:14px;font-weight:700;color:var(--text);}
+.report-opt-desc{font-size:11px;color:var(--text3);margin-top:2px;}
+.report-cancel{width:100%;padding:10px;background:none;border:1.5px solid var(--border2);border-radius:var(--r);cursor:pointer;font-size:13px;color:var(--text2);font-family:'DM Sans',sans-serif;margin-top:4px;transition:all .15s;}
+.report-cancel:hover{border-color:var(--danger);color:var(--danger);}
 </style>
 </head>
 <body>
@@ -1828,41 +1841,73 @@ function buildReportHTML() {
 </body></html>`;
 }
 
-async function downloadReport() {
-  const btn = event.target;
-  btn.textContent = '⏳ Generating...';
-  btn.disabled = true;
+function downloadReport() {
+  const ex = document.getElementById('reportModal');
+  if (ex) ex.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'report-modal-overlay';
+  overlay.id = 'reportModal';
+  overlay.innerHTML = `
+    <div class="report-modal">
+      <div class="report-modal-title">📊 Download Report</div>
+      <div class="report-modal-sub">Choose your preferred format:</div>
 
-  try {
-    const html = buildReportHTML();
-    const blob = new Blob([html], {type: 'text/html'});
-    const url = URL.createObjectURL(blob);
+      <button class="report-opt" onclick="executeReport('jpg')">
+        <span class="report-opt-icon">🖼️</span>
+        <div>
+          <div class="report-opt-title">JPG Image</div>
+          <div class="report-opt-desc">Download as image — perfect for sharing in Slack or WhatsApp.</div>
+        </div>
+      </button>
 
-    // Open in new window for printing/saving as PDF or screenshot
-    const win = window.open(url, '_blank', 'width=740,height=900');
-    if (win) {
-      win.onload = () => {
-        setTimeout(() => {
-          win.print();
-        }, 500);
+      <button class="report-opt" onclick="executeReport('pdf')">
+        <span class="report-opt-icon">📄</span>
+        <div>
+          <div class="report-opt-title">PDF</div>
+          <div class="report-opt-desc">Opens print dialog — save as PDF. Best for email or printing.</div>
+        </div>
+      </button>
+
+      <button class="report-cancel" onclick="document.getElementById('reportModal').remove()">Cancel</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+}
+
+async function executeReport(type) {
+  document.getElementById('reportModal').remove();
+  const html = buildReportHTML();
+  const blob = new Blob([html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+  if (type === 'jpg') {
+    // Open in new tab — user takes screenshot or uses browser print to save as image
+    const win = window.open(url, '_blank', 'width=760,height=920');
+    if (!win) { alert('Please allow popups for this site.'); return; }
+    win.onload = () => {
+      // Inject html2canvas to auto-download as JPG
+      const script = win.document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.onload = () => {
+        win.html2canvas(win.document.body, { scale: 2, useCORS: true, backgroundColor: '#001B4E' }).then(canvas => {
+          const link = win.document.createElement('a');
+          link.download = `wc-pool-report-${dateStr}.jpg`;
+          link.href = canvas.toDataURL('image/jpeg', 0.95);
+          link.click();
+          setTimeout(() => win.close(), 1000);
+        });
       };
+      win.document.head.appendChild(script);
+    };
+  } else if (type === 'pdf') {
+    const win = window.open(url, '_blank', 'width=760,height=920');
+    if (win) {
+      win.onload = () => setTimeout(() => win.print(), 600);
+    } else {
+      alert('Please allow popups for this site.');
     }
-
-    // Also download the HTML as fallback
-    const a = document.createElement('a');
-    a.href = url;
-    const d = new Date();
-    a.download = `wc-pool-report-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.html`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-    btn.textContent = '✅ Report ready!';
-    setTimeout(() => { btn.textContent = '📊 Download Report'; btn.disabled = false; }, 3000);
-  } catch(e) {
-    console.error(e);
-    btn.textContent = '📊 Download Report';
-    btn.disabled = false;
-    alert('Error generating report: ' + e.message);
   }
 }
 
