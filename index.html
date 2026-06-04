@@ -411,7 +411,7 @@ select option{background:white;}
       <div class="assign-banner">
         <div class="abt"><strong data-i18n="drawTitle">🎲 Team draw</strong><br><span data-i18n="drawDesc">Each participant gets a random team. If their team wins the World Cup, they get <strong>+10 pts bonus</strong>.</span></div>
         <button class="btn btn-g" onclick="assignTeams()" data-i18n="drawBtn">🎲 Draw teams</button>
-        <button class="btn btn-g" onclick="sendSlackNow()" style="background:#4A154B;border-color:#4A154B">📣 Enviar a Slack</button>
+        <button class="btn btn-g" onclick="downloadReport()" style="background:#059669;border-color:#059669">📊 Download Report</button>
       </div>
     </div>
     <div class="card">
@@ -1705,115 +1705,169 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 /* ═══════════════════════════════════════════
-   📣 SLACK WEBHOOK — NOTIFICACIONES AUTOMÁTICAS
+   📊 DAILY REPORT — JPG DOWNLOAD
 ═══════════════════════════════════════════ */
-const SLACK_WEBHOOK = 'https://hooks.slack.com/services/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';
-const SLACK_TZ_OFFSET = -5; // Colombia UTC-5
-// Proxy CORS para enviar a Slack desde el navegador
-const SLACK_PROXY = 'https://api.allorigins.win/raw?url=';
+const REPORT_TZ = -5; // Colombia UTC-5
 
-function getTodayMatches() {
+function getReportTodayMatches() {
   const now = new Date();
-  const nowCol = new Date(now.getTime() + SLACK_TZ_OFFSET * 3600000);
-  const todayColStr = nowCol.toISOString().slice(0,10);
+  const nowCol = new Date(now.getTime() + REPORT_TZ * 3600000);
+  const todayStr = nowCol.toISOString().slice(0,10);
   return MATCHES.filter(m => {
     const utc = getMatchUTC(m);
-    const colDate = new Date(utc + SLACK_TZ_OFFSET * 3600000);
-    return colDate.toISOString().slice(0,10) === todayColStr;
+    const colDate = new Date(utc + REPORT_TZ * 3600000);
+    return colDate.toISOString().slice(0,10) === todayStr;
   });
 }
 
-function buildSlackLeaderboard() {
-  if (!S.players.length) return '_Sin participantes aún_';
-  const rows = S.players.map((p, i) => {
+function getReportLeaderboard() {
+  return S.players.map((p, i) => {
     let pts = 0, exact = 0, win = 0;
     Object.entries(S.results).forEach(([mid, res]) => {
       const pred = (S.predictions[mid] || {})[p.id]; if (!pred) return;
       const mp = calcPts(pred, res); pts += mp; if (mp === 3) exact++; if (mp === 1) win++;
     });
     const bonus = (S.champion && p.team && p.team.toLowerCase() === S.champion.toLowerCase()) ? 10 : 0;
-    return {...p, pts, exact, win, bonus, total: pts + bonus};
+    return {...p, pts, exact, win, bonus, total: pts + bonus, idx: i};
   }).sort((a, b) => b.total - a.total || b.exact - a.exact);
-
-  const medal = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
-  const header = '| # | Jugador | Equipo | Exactos | Ganador | Bonus | Total |\n|---|---------|--------|---------|---------|-------|-------|';
-  const body = rows.map((p, i) =>
-    `| ${medal(i)} | ${p.name} | ${p.team ? p.teamFlag+' '+p.team : '—'} | ${p.exact} | ${p.win} | ${p.bonus ? '+'+p.bonus+'🏆' : '—'} | *${p.total}* |`
-  ).join('\n');
-  return header + '\n' + body;
 }
 
-function buildSlackMatchList(matches) {
-  if (!matches.length) return '_No hay partidos hoy_';
-  const header = '| # | Partido | Hora (Col) | Sede |\n|---|---------|-----------|------|';
-  const body = matches.map(m => {
-    const utc = getMatchUTC(m);
-    const colTime = new Date(utc + SLACK_TZ_OFFSET * 3600000);
-    const hh = colTime.getUTCHours().toString().padStart(2,'0');
-    const mm = colTime.getUTCMinutes().toString().padStart(2,'0');
-    const hFlag = FLAG_MAP[m.home] || '';
-    const aFlag = FLAG_MAP[m.away] || '';
-    return `| ${m.id} | ${hFlag} ${m.home} vs ${m.away} ${aFlag} | ${hh}:${mm} | ${m.venue} |`;
-  }).join('\n');
-  return header + '\n' + body;
-}
-
-async function sendSlackDailyUpdate() {
-  if (!SLACK_WEBHOOK) return;
-  const todayMatches = getTodayMatches();
+function buildReportHTML() {
+  const todayMatches = getReportTodayMatches();
+  const lb = getReportLeaderboard();
   const now = new Date();
-  const nowCol = new Date(now.getTime() + SLACK_TZ_OFFSET * 3600000);
-  const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const fechaStr = `${dias[nowCol.getUTCDay()]} ${nowCol.getUTCDate()} ${meses[nowCol.getUTCMonth()]} ${nowCol.getUTCFullYear()}`;
+  const nowCol = new Date(now.getTime() + REPORT_TZ * 3600000);
+  const dias = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const meses = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dateStr = `${dias[nowCol.getUTCDay()]} ${meses[nowCol.getUTCMonth()]} ${nowCol.getUTCDate()}, ${nowCol.getUTCFullYear()}`;
 
-  const matchSection = todayMatches.length
-    ? `⚽ *Partidos de hoy — ${fechaStr}*\n\n¡Recuerda poner tus predicciones antes del pitazo! 🔒\n\n${buildSlackMatchList(todayMatches)}\n\n⏰ Los campos se bloquean *10 minutos antes* de cada partido.\n👉 Haz tus predicciones: https://world-cup-pool-nu.vercel.app`
-    : `📅 *${fechaStr}* — No hay partidos hoy. ¡Descansa! 😴`;
+  const medal = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}.`;
+  const initials = name => name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const colors = ['#003DA5','#D52B1E','#C8A84B','#059669','#7C3AED','#0891B2'];
 
-  const lbSection = `🏆 *Tabla de posiciones*\n\n${buildSlackLeaderboard()}`;
-  const message = `${matchSection}\n\n---\n\n${lbSection}\n\n_Katapult World Cup Pool 2026_ ⚡`;
+  const matchRows = todayMatches.length > 0
+    ? todayMatches.map(m => {
+        const utc = getMatchUTC(m);
+        const colTime = new Date(utc + REPORT_TZ * 3600000);
+        const hh = colTime.getUTCHours().toString().padStart(2,'0');
+        const mm = colTime.getUTCMinutes().toString().padStart(2,'0');
+        const hf = FLAG_MAP[m.home]||''; const af = FLAG_MAP[m.away]||'';
+        return `<tr style="border-bottom:1px solid #EEF2FF;">
+          <td style="padding:10px 12px;"><span style="background:#EEF2FF;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#003DA5;">Grp ${m.group} · ${hh}:${mm}</span></td>
+          <td style="padding:10px 12px;font-weight:700;color:#001B4E;">${hf} ${m.home}</td>
+          <td style="padding:10px 12px;text-align:center;color:#94A3B8;font-weight:700;">VS</td>
+          <td style="padding:10px 12px;font-weight:700;color:#001B4E;">${m.away} ${af}</td>
+          <td style="padding:10px 12px;font-size:11px;color:#94A3B8;">${m.venue.split(',')[0]}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="5" style="padding:16px 12px;text-align:center;color:#94A3B8;font-style:italic;">No matches today — rest day!</td></tr>`;
 
-  const payload = JSON.stringify({ text: message });
+  const lbRows = lb.map((p, i) => {
+    const color = colors[p.idx % colors.length];
+    const av = p.photo
+      ? `<img src="${p.photo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`
+      : `<div style="width:28px;height:28px;border-radius:50%;background:${color};color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${initials(p.name)}</div>`;
+    const rankColor = i===0?'rgba(200,168,75,0.2)':i===1?'rgba(139,153,168,0.2)':i===2?'rgba(180,83,9,0.15)':'#EEF2FF';
+    const rankText = i===0?'#C8A84B':i===1?'#8B99A8':i===2?'#B45309':'#94A3B8';
+    return `<tr style="border-bottom:1px solid #EEF2FF;">
+      <td style="padding:11px 12px;"><div style="width:26px;height:26px;border-radius:50%;background:${rankColor};color:${rankText};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">${i+1}</div></td>
+      <td style="padding:11px 12px;"><div style="display:flex;align-items:center;gap:8px;">${av}<span style="font-weight:700;color:#001B4E;">${p.name}</span></div></td>
+      <td style="padding:11px 12px;color:#4A6080;">${p.team ? p.teamFlag+' '+p.team : '—'}</td>
+      <td style="padding:11px 12px;text-align:center;font-weight:700;color:#003DA5;">${p.exact}</td>
+      <td style="padding:11px 12px;text-align:center;color:#4A6080;">${p.win}</td>
+      <td style="padding:11px 12px;text-align:center;">${p.bonus?`<span style="background:rgba(200,168,75,0.15);color:#C8A84B;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700;">+${p.bonus}</span>`:'—'}</td>
+      <td style="padding:11px 12px;text-align:center;"><span style="background:rgba(0,61,165,0.1);color:#003DA5;font-size:18px;font-weight:700;padding:3px 12px;border-radius:6px;">${p.total}</span></td>
+    </tr>`;
+  }).join('');
 
-  // Llamar a la Vercel Function /api/slack (evita CORS)
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;background:#F0F4FF;width:700px;}</style>
+</head><body>
+<div style="background:#001B4E;width:700px;">
+  <div style="background:linear-gradient(135deg,#001B4E 0%,#003DA5 60%,#8B0000 100%);padding:24px 28px 20px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:3px;color:#C8A84B;text-transform:uppercase;margin-bottom:4px;">KATAPULT LABS</div>
+        <div style="font-size:32px;font-weight:700;color:white;letter-spacing:2px;line-height:1;">WORLD CUP <span style="color:#C8A84B;">POOL</span> 2026</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:6px;">${dateStr} &nbsp;·&nbsp; 48 teams &nbsp;·&nbsp; 104 matches</div>
+      </div>
+      <div style="background:rgba(200,168,75,0.2);border:1px solid rgba(200,168,75,0.4);border-radius:8px;padding:8px 14px;text-align:center;">
+        <div style="font-size:10px;color:#C8A84B;font-weight:700;letter-spacing:1px;">DAILY REPORT</div>
+        <div style="font-size:20px;color:white;font-weight:700;">${new Date().toLocaleDateString('en',{month:'short',day:'numeric'})}</div>
+      </div>
+    </div>
+  </div>
+  <div style="background:#F0F4FF;padding:20px 28px;">
+    <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Today's Matches</div>
+    <table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;">
+      ${matchRows}
+    </table>
+    ${todayMatches.length > 0 ? `<div style="background:#FFF3CD;border:1px solid #C8A84B;border-radius:8px;padding:8px 14px;margin-top:10px;font-size:12px;color:#856404;">Predictions lock <strong>10 min before kickoff</strong> — world-cup-pool-nu.vercel.app</div>` : ''}
+  </div>
+  <div style="background:white;padding:20px 28px;">
+    <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Leaderboard</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:#EEF2FF;">
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">#</th>
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">PLAYER</th>
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">TEAM</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">EXACT</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">WINNER</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">BONUS</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">TOTAL</th>
+      </tr></thead>
+      <tbody>${lbRows}</tbody>
+    </table>
+  </div>
+  <div style="background:linear-gradient(135deg,#001B4E,#003DA5);padding:12px 28px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:11px;color:rgba(255,255,255,0.5);">world-cup-pool-nu.vercel.app</div>
+    <div style="font-size:11px;color:#C8A84B;font-weight:700;letter-spacing:1px;">KATAPULT LABS · 2026</div>
+  </div>
+</div>
+</body></html>`;
+}
+
+async function downloadReport() {
+  const btn = event.target;
+  btn.textContent = '⏳ Generating...';
+  btn.disabled = true;
+
   try {
-    const r = await fetch('/api/slack', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload
-    });
-    const data = await r.json();
-    if (data.ok) { console.log('✅ Slack OK'); return true; }
-    throw new Error(data.error || 'Error desconocido');
+    const html = buildReportHTML();
+    const blob = new Blob([html], {type: 'text/html'});
+    const url = URL.createObjectURL(blob);
+
+    // Open in new window for printing/saving as PDF or screenshot
+    const win = window.open(url, '_blank', 'width=740,height=900');
+    if (win) {
+      win.onload = () => {
+        setTimeout(() => {
+          win.print();
+        }, 500);
+      };
+    }
+
+    // Also download the HTML as fallback
+    const a = document.createElement('a');
+    a.href = url;
+    const d = new Date();
+    a.download = `wc-pool-report-${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.html`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+    btn.textContent = '✅ Report ready!';
+    setTimeout(() => { btn.textContent = '📊 Download Report'; btn.disabled = false; }, 3000);
   } catch(e) {
-    console.error('❌ Error Slack:', e);
-    return false;
+    console.error(e);
+    btn.textContent = '📊 Download Report';
+    btn.disabled = false;
+    alert('Error generating report: ' + e.message);
   }
-}
-
-async function sendSlackNow() {
-  const ok = await sendSlackDailyUpdate();
-  alert(ok ? '✅ Mensaje enviado a Slack' : '❌ Error enviando a Slack. Revisa la consola.');
-}
-
-function scheduleSlackDaily() {
-  const now = new Date();
-  // 8am Colombia = 13:00 UTC
-  const next = new Date(now);
-  next.setUTCHours(13, 0, 0, 0);
-  if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
-  const ms = next - now;
-  setTimeout(() => {
-    sendSlackDailyUpdate();
-    setInterval(sendSlackDailyUpdate, 24 * 60 * 60 * 1000);
-  }, ms);
-  console.log(`📣 Slack programado en ${Math.round(ms/60000)} min`);
 }
 
 /* ─── BOOT ─── */
 tryRestoreFirebase();
-scheduleSlackDaily();
 </script>
 </body>
 </html>
