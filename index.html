@@ -1776,26 +1776,16 @@ async function sendSlackDailyUpdate() {
 
   const payload = JSON.stringify({ text: message });
 
-  // Intentar directo primero, luego proxy si falla por CORS
+  // Llamar a la Vercel Function /api/slack (evita CORS)
   try {
-    const r = await fetch(SLACK_WEBHOOK, {
+    const r = await fetch('/api/slack', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload
     });
-    if (r.ok) { console.log('✅ Slack OK (directo)'); return true; }
-  } catch(e) { console.log('Directo falló, usando proxy...'); }
-
-  // Fallback: proxy CORS
-  try {
-    const proxyUrl = SLACK_PROXY + encodeURIComponent(SLACK_WEBHOOK);
-    await fetch(proxyUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload
-    });
-    console.log('✅ Slack OK (proxy)');
-    return true;
+    const data = await r.json();
+    if (data.ok) { console.log('✅ Slack OK'); return true; }
+    throw new Error(data.error || 'Error desconocido');
   } catch(e) {
     console.error('❌ Error Slack:', e);
     return false;
