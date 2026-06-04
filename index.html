@@ -1709,20 +1709,17 @@ setInterval(() => {
 ═══════════════════════════════════════════ */
 const SLACK_WEBHOOK = 'https://hooks.slack.com/services/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';
 const SLACK_TZ_OFFSET = -5; // Colombia UTC-5
+// Proxy CORS para enviar a Slack desde el navegador
+const SLACK_PROXY = 'https://api.allorigins.win/raw?url=';
 
 function getTodayMatches() {
   const now = new Date();
-  const todayStr = now.toISOString().slice(0,10); // YYYY-MM-DD
+  const nowCol = new Date(now.getTime() + SLACK_TZ_OFFSET * 3600000);
+  const todayColStr = nowCol.toISOString().slice(0,10);
   return MATCHES.filter(m => {
     const utc = getMatchUTC(m);
-    const matchDate = new Date(utc);
-    // Convertir a fecha Colombia
-    const colDate = new Date(matchDate.getTime() + SLACK_TZ_OFFSET * 3600000);
-    const matchDateStr = colDate.toISOString().slice(0,10);
-    // Comparar con hoy en Colombia
-    const nowCol = new Date(now.getTime() + SLACK_TZ_OFFSET * 3600000);
-    const todayColStr = nowCol.toISOString().slice(0,10);
-    return matchDateStr === todayColStr;
+    const colDate = new Date(utc + SLACK_TZ_OFFSET * 3600000);
+    return colDate.toISOString().slice(0,10) === todayColStr;
   });
 }
 
@@ -1754,10 +1751,9 @@ function buildSlackMatchList(matches) {
     const colTime = new Date(utc + SLACK_TZ_OFFSET * 3600000);
     const hh = colTime.getUTCHours().toString().padStart(2,'0');
     const mm = colTime.getUTCMinutes().toString().padStart(2,'0');
-    const hf = `${hh}:${mm}`;
     const hFlag = FLAG_MAP[m.home] || '';
     const aFlag = FLAG_MAP[m.away] || '';
-    return `| ${m.id} | ${hFlag} ${m.home} vs ${m.away} ${aFlag} | ${hf} | ${m.venue} |`;
+    return `| ${m.id} | ${hFlag} ${m.home} vs ${m.away} ${aFlag} | ${hh}:${mm} | ${m.venue} |`;
   }).join('\n');
   return header + '\n' + body;
 }
@@ -1776,39 +1772,53 @@ async function sendSlackDailyUpdate() {
     : `📅 *${fechaStr}* — No hay partidos hoy. ¡Descansa! 😴`;
 
   const lbSection = `🏆 *Tabla de posiciones*\n\n${buildSlackLeaderboard()}`;
-
   const message = `${matchSection}\n\n---\n\n${lbSection}\n\n_Katapult World Cup Pool 2026_ ⚡`;
 
+  const payload = JSON.stringify({ text: message });
+
+  // Intentar directo primero, luego proxy si falla por CORS
   try {
-    await fetch(SLACK_WEBHOOK, {
+    const r = await fetch(SLACK_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: message })
+      body: payload
     });
-    console.log('✅ Slack notificación enviada');
+    if (r.ok) { console.log('✅ Slack OK (directo)'); return true; }
+  } catch(e) { console.log('Directo falló, usando proxy...'); }
+
+  // Fallback: proxy CORS
+  try {
+    const proxyUrl = SLACK_PROXY + encodeURIComponent(SLACK_WEBHOOK);
+    await fetch(proxyUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+    console.log('✅ Slack OK (proxy)');
+    return true;
   } catch(e) {
-    console.error('❌ Error enviando a Slack:', e);
+    console.error('❌ Error Slack:', e);
+    return false;
   }
 }
 
-// Botón manual en admin para enviar ahora
-function sendSlackNow() {
-  sendSlackDailyUpdate().then(() => alert('✅ Mensaje enviado a Slack'));
+async function sendSlackNow() {
+  const ok = await sendSlackDailyUpdate();
+  alert(ok ? '✅ Mensaje enviado a Slack' : '❌ Error enviando a Slack. Revisa la consola.');
 }
 
-// Auto-envío diario a las 8am hora Colombia
 function scheduleSlackDaily() {
   const now = new Date();
-  const nowCol = new Date(now.getTime() + SLACK_TZ_OFFSET * 3600000);
-  const next8am = new Date(nowCol);
-  next8am.setUTCHours(8 - SLACK_TZ_OFFSET, 0, 0, 0); // 8am Col = 13:00 UTC
-  if (next8am <= now) next8am.setUTCDate(next8am.getUTCDate() + 1);
-  const msUntil = next8am - now;
+  // 8am Colombia = 13:00 UTC
+  const next = new Date(now);
+  next.setUTCHours(13, 0, 0, 0);
+  if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+  const ms = next - now;
   setTimeout(() => {
     sendSlackDailyUpdate();
     setInterval(sendSlackDailyUpdate, 24 * 60 * 60 * 1000);
-  }, msUntil);
-  console.log(`📣 Slack diario programado en ${Math.round(msUntil/60000)} minutos`);
+  }, ms);
+  console.log(`📣 Slack programado en ${Math.round(ms/60000)} min`);
 }
 
 /* ─── BOOT ─── */
