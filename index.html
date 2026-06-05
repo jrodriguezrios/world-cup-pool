@@ -425,6 +425,7 @@ select option{background:white;}
         <div class="abt"><strong data-i18n="drawTitle">🎲 Team draw</strong><br><span data-i18n="drawDesc">Each participant gets a random team. If their team wins the World Cup, they get <strong>+10 pts bonus</strong>.</span></div>
         <button class="btn btn-g" onclick="assignTeams()" data-i18n="drawBtn">🎲 Draw teams</button>
         <button class="btn btn-g" onclick="downloadReport()" style="background:#059669;border-color:#059669">📊 Download Report</button>
+        <button class="btn btn-g admin-only" onclick="exportBackupXLSX()" style="background:#7C3AED;border-color:#7C3AED" title="Descargar backup completo en Excel">💾 Backup Excel</button>
       </div>
     </div>
     <div class="card">
@@ -2201,6 +2202,105 @@ async function executeReport(type) {
       alert('Please allow popups for this site.');
     }
   }
+}
+
+/* ═══════════════════════════════════════════
+   💾 EXPORT BACKUP → EXCEL (.xlsx)
+═══════════════════════════════════════════ */
+async function exportBackupXLSX() {
+  // Load SheetJS from CDN if not present
+  if (typeof XLSX === 'undefined') {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const wb = XLSX.utils.book_new();
+  const now = new Date().toLocaleString('es-CO', {timeZone:'America/Bogota'});
+  const dateStr = new Date().toISOString().slice(0,10);
+
+  // ── Hoja 1: TABLA DE POSICIONES ──
+  const lbRows = [['#','Participante','Email','Equipo Sorteado','Exactos (3pts)','Ganador (1pt)','Bonus Campeón','Total Pts']];
+  const lbData = S.players.map((p, i) => {
+    let pts=0, exact=0, win=0;
+    Object.entries(S.results).forEach(([mid, res]) => {
+      const pred = (S.predictions[mid]||{})[p.id]; if (!pred) return;
+      const mp = calcPts(pred, res); pts+=mp;
+      if (mp===3) exact++; if (mp===1) win++;
+    });
+    const bonus = (S.champion && p.team && p.team.toLowerCase()===S.champion.toLowerCase()) ? 10 : 0;
+    return {name:p.name, email:p.email||'', team:p.team||'Sin asignar', exact, win, bonus, total:pts+bonus, idx:i};
+  }).sort((a,b) => b.total-a.total || b.exact-a.exact);
+
+  lbData.forEach((p, i) => {
+    lbRows.push([i+1, p.name, p.email, p.team, p.exact, p.win, p.bonus, p.total]);
+  });
+  const wsLb = XLSX.utils.aoa_to_sheet(lbRows);
+  wsLb['!cols'] = [{wch:4},{wch:22},{wch:28},{wch:20},{wch:14},{wch:14},{wch:14},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, wsLb, '🏆 Tabla');
+
+  // ── Hoja 2: PREDICCIONES (todas) ──
+  const predRows = [['Partido #','Fase','Local','Visitante','Jugador','Pred. Local','Pred. Visit.','Res. Local','Res. Visit.','Puntos']];
+  MATCHES.forEach(m => {
+    const res = S.results[m.id] || {};
+    const hasRes = res.home !== undefined;
+    S.players.forEach(p => {
+      const pred = (S.predictions[m.id]||{})[p.id];
+      if (!pred) return;
+      const pts = hasRes ? calcPts(pred, res) : '-';
+      const homeName = getTeamName(m.id,'home');
+      const awayName = getTeamName(m.id,'away');
+      predRows.push([
+        m.id, m.phase,
+        homeName.replace(/^\S+\s/,'') || m.home,
+        awayName.replace(/^\S+\s/,'') || m.away,
+        p.name, pred.home, pred.away,
+        hasRes ? res.home : '-', hasRes ? res.away : '-',
+        pts
+      ]);
+    });
+  });
+  const wsPred = XLSX.utils.aoa_to_sheet(predRows);
+  wsPred['!cols'] = [{wch:9},{wch:18},{wch:18},{wch:18},{wch:20},{wch:12},{wch:12},{wch:12},{wch:12},{wch:7}];
+  XLSX.utils.book_append_sheet(wb, wsPred, '⚽ Predicciones');
+
+  // ── Hoja 3: RESULTADOS OFICIALES ──
+  const resRows = [['Partido #','Fase','Grupo','Local','Visitante','Goles Local','Goles Visit.','Fecha','Sede']];
+  MATCHES.forEach(m => {
+    const res = S.results[m.id];
+    if (!res || res.home === undefined) return;
+    resRows.push([m.id, m.phase, m.group, m.home, m.away, res.home, res.away, m.date, m.venue]);
+  });
+  const wsRes = XLSX.utils.aoa_to_sheet(resRows);
+  wsRes['!cols'] = [{wch:9},{wch:18},{wch:7},{wch:18},{wch:18},{wch:12},{wch:12},{wch:14},{wch:35}];
+  XLSX.utils.book_append_sheet(wb, wsRes, '📋 Resultados');
+
+  // ── Hoja 4: PARTICIPANTES ──
+  const playRows = [['ID','Nombre','Email','Equipo Sorteado','Bandera','Tiene Foto']];
+  S.players.forEach(p => {
+    playRows.push([p.id, p.name, p.email||'', p.team||'', p.teamFlag||'', p.photo ? 'Sí' : 'No']);
+  });
+  const wsPlay = XLSX.utils.aoa_to_sheet(playRows);
+  wsPlay['!cols'] = [{wch:28},{wch:22},{wch:30},{wch:20},{wch:8},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, wsPlay, '👥 Participantes');
+
+  // ── Hoja 5: METADATA ──
+  const metaRows = [
+    ['Backup generado', now],
+    ['Campeón registrado', S.champion || 'Pendiente'],
+    ['Total participantes', S.players.length],
+    ['Partidos con resultado', Object.keys(S.results).length],
+    ['Total predicciones', Object.values(S.predictions).reduce((acc,mp)=>acc+Object.keys(mp).length,0)],
+  ];
+  const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
+  wsMeta['!cols'] = [{wch:25},{wch:30}];
+  XLSX.utils.book_append_sheet(wb, wsMeta, 'ℹ️ Info');
+
+  // Descargar
+  XLSX.writeFile(wb, `polla-mundial-2026-backup-${dateStr}.xlsx`);
 }
 
 /* ─── BOOT ─── */
