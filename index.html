@@ -924,15 +924,15 @@ const MATCHES = [
   {id:60,group:'J',phase:'Grupos',home:'Jordania',away:'Argentina',date:'Sáb 27 Jun',venue:'AT&T Stadium, Dallas',time:'22:00',tz:'Dallas'},
   // ── RONDA DE 32 ──
   {id:73,group:'Oct',phase:'Octavos',home:'2° Grupo A',away:'2° Grupo B',date:'Dom 28 Jun',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
-  {id:74,group:'Oct',phase:'Octavos',home:'1° Grupo C',away:'2° Grupo F',date:'Lun 29 Jun',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
-  {id:75,group:'Oct',phase:'Octavos',home:'1° Grupo E',away:'3° Mejor',date:'Lun 29 Jun',venue:'Gillette Stadium, Boston',time:'16:30',tz:'Boston'},
+  {id:74,group:'Oct',phase:'Octavos',home:'1° Grupo E',away:'3° Mejor',date:'Lun 29 Jun',venue:'Gillette Stadium, Boston',time:'16:30',tz:'Boston'},
+  {id:75,group:'Oct',phase:'Octavos',home:'1° Grupo C',away:'2° Grupo F',date:'Lun 29 Jun',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
   {id:76,group:'Oct',phase:'Octavos',home:'1° Grupo F',away:'2° Grupo C',date:'Lun 29 Jun',venue:'Estadio BBVA, Monterrey',time:'21:00',tz:'MTY'},
   {id:77,group:'Oct',phase:'Octavos',home:'2° Grupo E',away:'2° Grupo I',date:'Mar 30 Jun',venue:'AT&T Stadium, Dallas',time:'13:00',tz:'Dallas'},
   {id:78,group:'Oct',phase:'Octavos',home:'1° Grupo I',away:'3° Mejor',date:'Mar 30 Jun',venue:'MetLife Stadium, NJ',time:'17:00',tz:'NYC'},
   {id:79,group:'Oct',phase:'Octavos',home:'1° Grupo A',away:'3° Mejor',date:'Mar 30 Jun',venue:'Estadio Azteca, CDMX',time:'21:00',tz:'CDMX'},
   {id:80,group:'Oct',phase:'Octavos',home:'1° Grupo L',away:'3° Mejor',date:'Mié 1 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
-  {id:81,group:'Oct',phase:'Octavos',home:'1° Grupo G',away:'3° Mejor',date:'Mié 1 Jul',venue:'Lumen Field, Seattle',time:'16:00',tz:'Seattle'},
-  {id:82,group:'Oct',phase:'Octavos',home:'1° Grupo D',away:'3° Mejor',date:'Mié 1 Jul',venue:"Levi's Stadium, San Francisco",time:'20:00',tz:'SF'},
+  {id:81,group:'Oct',phase:'Octavos',home:'1° Grupo D',away:'3° Mejor',date:'Mié 1 Jul',venue:"Levi's Stadium, San Francisco",time:'20:00',tz:'SF'},
+  {id:82,group:'Oct',phase:'Octavos',home:'1° Grupo G',away:'3° Mejor',date:'Mié 1 Jul',venue:'Lumen Field, Seattle',time:'16:00',tz:'Seattle'},
   {id:83,group:'Oct',phase:'Octavos',home:'1° Grupo H',away:'2° Grupo J',date:'Jue 2 Jul',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
   {id:84,group:'Oct',phase:'Octavos',home:'2° Grupo K',away:'2° Grupo L',date:'Jue 2 Jul',venue:'BMO Field, Toronto',time:'19:00',tz:'Toronto'},
   {id:85,group:'Oct',phase:'Octavos',home:'1° Grupo B',away:'3° Mejor',date:'Jue 2 Jul',venue:'BC Place, Vancouver',time:'23:00',tz:'Vancouver'},
@@ -1105,12 +1105,14 @@ function attachListeners() {
     S.champion = d.champion || null;
     S.activePhase = d.activePhase || 'Grupos';
     renderPlayers();
+    refreshResolvedNames();
     const active = document.querySelector('.section.active');
     if (active) {
       const id = active.id;
       if (id === 'tab-tabla') calcScores();
       if (id === 'tab-partidos') renderMatchList();
       if (id === 'tab-resultados') renderResultList();
+      if (id === 'tab-grupos') renderGroups();
     }
   });
 }
@@ -1306,14 +1308,27 @@ function showDrawModal() {
 
 /* ─── GRUPOS ─── */
 function renderGroups() {
-  document.getElementById('groupsGrid').innerHTML = Object.entries(GROUPS).map(([l, teams]) => `
-    <div class="group-card">
-      <div class="group-head"><span class="group-head-title">${t('group')} ${l}</span><span class="sub">${teams.length} ${t('teams')}</span></div>
+  const standings = calcGroupStandings();
+  document.getElementById('groupsGrid').innerHTML = Object.entries(GROUPS).map(([l, teams]) => {
+    const st = standings[l] || teams.map(([n,f])=>({name:n,flag:f,pts:0,pj:0,g:0,e:0,p:0,gf:0,gc:0,gd:0}));
+    const hasData = st.some(tm => tm.pj > 0);
+    return `<div class="group-card">
+      <div class="group-head">
+        <span class="group-head-title">${t('group')} ${l}</span>
+        <span class="sub">${hasData ? 'En curso' : 'Por jugar'}</span>
+      </div>
       <table class="g-table">
-        <thead><tr><th>${t('team')}</th><th>${t('mp')}</th><th>${t('w')}</th><th>${t('d')}</th><th>${t('l')}</th><th>${t('pts')}</th></tr></thead>
-        <tbody>${teams.map(([n,f]) => `<tr><td>${f} ${n}</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>`).join('')}</tbody>
+        <thead><tr><th>${t('team')}</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>Pts</th></tr></thead>
+        <tbody>${st.map((tm,i) => `<tr style="${i<2&&hasData?'background:rgba(0,61,165,0.04)':''}">
+          <td>${tm.flag} ${tm.name}${i<2&&hasData?'<span style="font-size:9px;font-weight:700;color:var(--success);margin-left:4px">✓</span>':''}</td>
+          <td>${tm.pj}</td><td>${tm.g}</td><td>${tm.e}</td><td>${tm.p}</td>
+          <td>${tm.gf}</td><td>${tm.gc}</td>
+          <td style="font-weight:700;color:var(--accent)">${tm.pts}</td>
+        </tr>`).join('')}
+        </tbody>
       </table>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 /* ─── PREDICCIONES ─── */
@@ -1357,7 +1372,27 @@ function renderMatchList() {
   const matches = MATCHES.filter(m => m.phase === S.activePhase);
   if (!S.players.length) { list.innerHTML = `<div class="empty">${t('addFirst')}</div>`; return; }
   if (!S.currentPlayer) { list.innerHTML = `<div class="empty">${t('selectToSee')}</div>`; return; }
+  refreshResolvedNames();
   list.innerHTML = matches.map(m => matchCardHTML(m, true)).join('');
+}
+
+// Renderiza nombre de equipo con bandera si aplica, o placeholder en gris
+function renderTeam(name, right=false) {
+  const isPlaceholder = !name || name.includes('°') || name.startsWith('Gan.') ||
+    name.startsWith('QF') || name.startsWith('SF') || name.startsWith('Perdedor') || name.startsWith('Ganador');
+  if (isPlaceholder) {
+    return `<span style="color:var(--text3);font-size:12px;font-weight:500">${name||'?'}</span>`;
+  }
+  // name may already include flag emoji (from getTeamName resolving standings)
+  // Check if it starts with an emoji flag
+  const hasEmoji = /^\p{Emoji}/u.test(name);
+  if (hasEmoji) {
+    // Already has flag prefix from standings resolver
+    return right ? `<span>${name.split(' ').slice(1).join(' ')} ${name.split(' ')[0]}</span>`
+                 : `<span>${name}</span>`;
+  }
+  const f = flag(name);
+  return right ? `${name}${f?' '+f:''}` : `${f?f+' ':''}${name}`;
 }
 
 function matchCardHTML(m, showPred) {
@@ -1390,7 +1425,7 @@ function matchCardHTML(m, showPred) {
       <div class="mmeta-right">${lockBadge}</div>
     </div>
     <div class="mrow">
-      <span class="team">${flag(m.home) ? flag(m.home)+' ' : ''}${m.home}</span>
+      <span class="team">${renderTeam(getTeamName(m.id,'home'))}</span>
       <div class="sbox">
         ${showPred ? `
           <input class="sinp" type="number" min="0" max="20" id="ph${m.id}" value="${hp?pred.home:''}" placeholder="–" oninput="savePred(${m.id})" ${canEdit ? '' : 'disabled'}>
@@ -1402,7 +1437,7 @@ function matchCardHTML(m, showPred) {
           <input class="sinp" type="number" min="0" max="20" id="ra${m.id}" value="${res.away!==undefined?res.away:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
         `}
       </div>
-      <span class="team r">${m.away}${flag(m.away) ? ' '+flag(m.away) : ''}</span>
+      <span class="team r">${renderTeam(getTeamName(m.id,'away'), true)}</span>
     </div>
     <div class="mfoot">
       ${showPred
@@ -1443,6 +1478,7 @@ function renderResultados() {
 function setResPhase(ph) { resPhase = ph; renderResultados(); }
 
 function renderResultList() {
+  refreshResolvedNames();
   const list = document.getElementById('resultsList');
   const matches = MATCHES.filter(m => m.phase === resPhase);
   const champ = resPhase === 'Final' ? `
@@ -1474,6 +1510,255 @@ function saveChampion() {
   if (DB) DB.ref(`${DB_PATH}/champion`).set(v);
   else { S.champion = v; localSave(); renderResultados(); }
 }
+
+/* ═══════════════════════════════════════════
+   🏆 MOTOR DE CLASIFICACIÓN DEL TORNEO
+   Calcula posiciones de grupo y resuelve
+   los nombres de equipos en fases eliminatorias
+═══════════════════════════════════════════ */
+
+// Reglas FIFA para desempate de grupos
+function calcGroupStandings() {
+  const standings = {};
+
+  // Inicializar tabla para cada grupo
+  Object.keys(GROUPS).forEach(g => {
+    standings[g] = GROUPS[g].map(([name, flag]) => ({
+      name, flag, pts:0, pj:0, g:0, e:0, p:0, gf:0, gc:0, gd:0
+    }));
+  });
+
+  // Procesar resultados de los 72 partidos de grupos
+  MATCHES.filter(m => m.id <= 72).forEach(m => {
+    const res = S.results[m.id];
+    if (!res || res.home === undefined || res.away === undefined) return;
+
+    const grpTeams = standings[m.group];
+    if (!grpTeams) return;
+
+    const home = grpTeams.find(t => t.name === m.home);
+    const away = grpTeams.find(t => t.name === m.away);
+    if (!home || !away) return;
+
+    home.pj++; away.pj++;
+    home.gf += res.home; home.gc += res.away;
+    away.gf += res.away; away.gc += res.home;
+    home.gd = home.gf - home.gc;
+    away.gd = away.gf - away.gc;
+
+    if (res.home > res.away)      { home.pts+=3; home.g++; away.p++; }
+    else if (res.home < res.away) { away.pts+=3; away.g++; home.p++; }
+    else                           { home.pts+=1; away.pts+=1; home.e++; away.e++; }
+  });
+
+  // Ordenar cada grupo: pts → gd → gf → nombre (alfabético como último criterio)
+  Object.keys(standings).forEach(g => {
+    standings[g].sort((a,b) =>
+      b.pts-a.pts || b.gd-a.gd || b.gf-a.gf || a.name.localeCompare(b.name)
+    );
+  });
+
+  return standings;
+}
+
+// Determina los 8 mejores terceros (reglamento FIFA 2026: 12 grupos → 8 pasan)
+function getBestThirds(standings) {
+  const thirds = Object.entries(standings)
+    .map(([g, teams]) => ({ group:g, ...teams[2] }))
+    .filter(t => t.pj > 0); // solo grupos con al menos 1 partido jugado
+
+  thirds.sort((a,b) => b.pts-a.pts || b.gd-a.gd || b.gf-a.gf || a.name.localeCompare(b.name));
+  return thirds.slice(0, 8);
+}
+
+// Mapeo oficial FIFA de qué partido de octavos enfrenta a qué 3°
+// Basado en el bracket oficial del Mundial 2026
+// Los 8 mejores terceros de los 12 grupos se asignan según ranking
+const THIRD_PLACE_SLOTS = {
+  // match_id → posición del 3° en el ranking (0=mejor, 7=octavo)
+  74: 0,  // M74: 1°E vs mejor 3°
+  75: 1,  // M75: 1°C vs 2° mejor 3°  (sede Houston según oficial)
+  78: 2,  // M78: 1°I vs 3° mejor 3°
+  79: 3,  // M79: 1°A vs 4° mejor 3°
+  80: 4,  // M80: 1°L vs 5° mejor 3°
+  81: 5,  // M81: 1°D vs 6° mejor 3°
+  82: 6,  // Wait - M82 is 1°G (corrected)
+  85: 7,  // M85: 1°B vs 8° mejor 3°
+};
+
+// Resolver nombres reales para todos los partidos eliminatorios
+function resolveKnockoutNames() {
+  const standings = calcGroupStandings();
+  const bestThirds = getBestThirds(standings);
+  const resolved = {}; // matchId → { home: 'nombre equipo', away: 'nombre equipo' }
+
+  // ── OCTAVOS (M73–M88): resolver desde standings de grupos ──
+  const octavosRules = {
+    73: { home: ['A',1], away: ['B',1] },
+    74: { home: ['E',0], away: 'third_0' },
+    75: { home: ['C',0], away: ['F',1] },
+    76: { home: ['F',0], away: ['C',1] },
+    77: { home: ['E',1], away: ['I',1] },
+    78: { home: ['I',0], away: 'third_1' },
+    79: { home: ['A',0], away: 'third_2' },
+    80: { home: ['L',0], away: 'third_3' },
+    81: { home: ['D',0], away: 'third_4' },
+    82: { home: ['G',0], away: 'third_5' },
+    83: { home: ['H',0], away: ['J',1] },
+    84: { home: ['K',1], away: ['L',1] },
+    85: { home: ['B',0], away: 'third_6' },
+    86: { home: ['D',1], away: ['G',1] },
+    87: { home: ['J',0], away: ['H',1] },
+    88: { home: ['K',0], away: 'third_7' },
+  };
+
+  function resolveSlot(slot) {
+    if (Array.isArray(slot)) {
+      const [grp, pos] = slot;
+      const team = standings[grp]?.[pos];
+      return team && team.pj > 0 ? team : null;
+    }
+    if (typeof slot === 'string' && slot.startsWith('third_')) {
+      const idx = parseInt(slot.split('_')[1]);
+      return bestThirds[idx] || null;
+    }
+    return null;
+  }
+
+  Object.entries(octavosRules).forEach(([mid, rule]) => {
+    const h = resolveSlot(rule.home);
+    const a = resolveSlot(rule.away);
+    resolved[parseInt(mid)] = {
+      home: h ? `${h.flag} ${h.name}` : MATCHES.find(m=>m.id===parseInt(mid))?.home,
+      away: a ? `${a.flag} ${a.name}` : MATCHES.find(m=>m.id===parseInt(mid))?.away,
+    };
+  });
+
+  // ── OCTAVOS DE FINAL (M89–M96): ganadores de M73–M88 ──
+  const r16Rules = {
+    89: { home: 73, away: 75 },  // Gan.M73 vs Gan.M75 (NBC: M73 vs M75)
+    90: { home: 74, away: 78 },  // Gan.M74 vs Gan.M78
+    91: { home: 76, away: 77 },  // Gan.M76 vs Gan.M77
+    92: { home: 79, away: 80 },  // Gan.M79 vs Gan.M80
+    93: { home: 81, away: 82 },  // Gan.M81 vs Gan.M82
+    94: { home: 83, away: 84 },  // Gan.M83 vs Gan.M84
+    95: { home: 85, away: 86 },  // Gan.M85 vs Gan.M86
+    96: { home: 87, away: 88 },  // Gan.M87 vs Gan.M88
+  };
+
+  function winnerOf(mid) {
+    const res = S.results[mid];
+    const nm = resolved[mid] || {};
+    const match = MATCHES.find(m => m.id === mid);
+    const hName = nm.home || match?.home;
+    const aName = nm.away || match?.away;
+    if (!res || res.home === undefined) return null;
+    if (res.home > res.away) return hName;
+    if (res.away > res.home) return aName;
+    return null; // empate en eliminatoria → pendiente (se resuelve por penales; admin ingresa)
+  }
+
+  function loserOf(mid) {
+    const res = S.results[mid];
+    const nm = resolved[mid] || {};
+    const match = MATCHES.find(m => m.id === mid);
+    const hName = nm.home || match?.home;
+    const aName = nm.away || match?.away;
+    if (!res || res.home === undefined) return null;
+    if (res.home > res.away) return aName;
+    if (res.away > res.home) return hName;
+    return null;
+  }
+
+  Object.entries(r16Rules).forEach(([mid, rule]) => {
+    const h = winnerOf(rule.home);
+    const a = winnerOf(rule.away);
+    const match = MATCHES.find(m => m.id === parseInt(mid));
+    resolved[parseInt(mid)] = {
+      home: h || match?.home,
+      away: a || match?.away,
+    };
+  });
+
+  // ── CUARTOS DE FINAL (M97–M100): ganadores de M89–M96 ──
+  const qfRules = {
+    97:  { home: 90, away: 89 },
+    98:  { home: 91, away: 93 },
+    99:  { home: 94, away: 92 },
+    100: { home: 95, away: 96 },
+  };
+
+  function winnerOfR(mid) {
+    const res = S.results[mid];
+    const nm = resolved[mid] || {};
+    const match = MATCHES.find(m => m.id === mid);
+    const hName = nm.home || match?.home;
+    const aName = nm.away || match?.away;
+    if (!res || res.home === undefined) return null;
+    if (res.home > res.away) return hName;
+    if (res.away > res.home) return aName;
+    return null;
+  }
+
+  Object.entries(qfRules).forEach(([mid, rule]) => {
+    const h = winnerOfR(rule.home);
+    const a = winnerOfR(rule.away);
+    const match = MATCHES.find(m => m.id === parseInt(mid));
+    resolved[parseInt(mid)] = {
+      home: h || match?.home,
+      away: a || match?.away,
+    };
+  });
+
+  // ── SEMIFINALES (M101–M102): ganadores de cuartos ──
+  const sfRules = {
+    101: { home: 97,  away: 98  },
+    102: { home: 99,  away: 100 },
+  };
+
+  Object.entries(sfRules).forEach(([mid, rule]) => {
+    const h = winnerOfR(rule.home);
+    const a = winnerOfR(rule.away);
+    const match = MATCHES.find(m => m.id === parseInt(mid));
+    resolved[parseInt(mid)] = {
+      home: h || match?.home,
+      away: a || match?.away,
+    };
+  });
+
+  // ── TERCER PUESTO (M103): perdedores de semis ──
+  const h103 = loserOf(101) || winnerOfR(101); // si no hay resultado, mostrar ganador como placeholder
+  const a103 = loserOf(102) || winnerOfR(102);
+  resolved[103] = {
+    home: h103 || 'Perdedor SF1',
+    away: a103 || 'Perdedor SF2',
+  };
+
+  // ── FINAL (M104): ganadores de semis ──
+  resolved[104] = {
+    home: winnerOfR(101) || 'Ganador SF1',
+    away: winnerOfR(102) || 'Ganador SF2',
+  };
+
+  return resolved;
+}
+
+// Cache global de nombres resueltos — se recalcula cuando cambian resultados
+let RESOLVED_NAMES = {};
+
+function refreshResolvedNames() {
+  RESOLVED_NAMES = resolveKnockoutNames();
+}
+
+// Obtener nombre resuelto de un equipo en un partido
+function getTeamName(matchId, side) {
+  if (matchId <= 72) {
+    const m = MATCHES.find(x => x.id === matchId);
+    return m ? m[side] : '';
+  }
+  return RESOLVED_NAMES[matchId]?.[side] || MATCHES.find(x=>x.id===matchId)?.[side] || '';
+}
+
 
 /* ─── TABLA ─── */
 function calcPts(pred, res) {
@@ -1699,8 +1984,12 @@ async function fetchAPIResults() {
     log.innerHTML += `<br><strong>${t('updateDone')} ${updated} ${t('updated')}, ${apiMatches.length} ${t('matchesInApi')}</strong>`;
     
     if (updated > 0) {
+      refreshResolvedNames();
       renderResultList();
       calcScores();
+      // Si estamos en grupos, actualizar tabla de posiciones
+      const activeTab = document.querySelector('.section.active');
+      if (activeTab && activeTab.id === 'tab-grupos') renderGroups();
     }
 
   } catch(err) {
