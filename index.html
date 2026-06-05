@@ -1143,12 +1143,15 @@ function startApp() {
 function ensurePlayerExists(u) {
   const exists = S.players.find(p => p.id === u.id);
   if (!exists) {
+    // Primera vez: guarda foto de Google como punto de partida
     const p = {name:u.name, id:u.id, email:u.email, team:null, teamFlag:null, photo:u.photo||null};
     if (DB) DB.ref(`${DB_PATH}/players/${u.id}`).set(p);
     else { S.players.push(p); localSave(); }
-  } else if (u.photo && !exists.photo) {
-    if (DB) DB.ref(`${DB_PATH}/players/${u.id}/photo`).set(u.photo);
-    else { exists.photo = u.photo; localSave(); }
+  } else {
+    // Ya existe: NUNCA sobreescribir la foto — el usuario puede haberla cambiado manualmente.
+    // Solo actualizamos el nombre por si cambió en Google.
+    if (DB) DB.ref(`${DB_PATH}/players/${u.id}/name`).set(u.name);
+    else { exists.name = u.name; localSave(); }
   }
 }
 
