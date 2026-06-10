@@ -1111,8 +1111,16 @@ function attachListeners() {
     if (active) {
       const id = active.id;
       if (id === 'tab-tabla') calcScores();
-      if (id === 'tab-partidos') renderMatchList();
-      if (id === 'tab-resultados') renderResultList();
+      if (id === 'tab-partidos') {
+        const focused = document.activeElement;
+        const isTyping = focused && (focused.id.startsWith('ph') || focused.id.startsWith('pa'));
+        if (!isTyping) renderMatchList();
+      }
+      if (id === 'tab-resultados') {
+        const focused = document.activeElement;
+        const isTyping = focused && (focused.id.startsWith('rh') || focused.id.startsWith('ra'));
+        if (!isTyping) renderResultList();
+      }
       if (id === 'tab-grupos') renderGroups();
     }
   });
@@ -1370,11 +1378,13 @@ function onPlayerChange() {
 
 function renderMatchList() {
   const list = document.getElementById('matchesList');
+  const savedScroll = window.scrollY;
   const matches = MATCHES.filter(m => m.phase === S.activePhase);
   if (!S.players.length) { list.innerHTML = `<div class="empty">${t('addFirst')}</div>`; return; }
   if (!S.currentPlayer) { list.innerHTML = `<div class="empty">${t('selectToSee')}</div>`; return; }
   refreshResolvedNames();
   list.innerHTML = matches.map(m => matchCardHTML(m, true)).join('');
+  requestAnimationFrame(() => window.scrollTo(0, savedScroll));
 }
 
 // Renderiza nombre de equipo con bandera si aplica, o placeholder en gris
