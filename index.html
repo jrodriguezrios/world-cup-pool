@@ -424,6 +424,7 @@ select option{background:white;}
       <div class="assign-banner">
         <div class="abt"><strong data-i18n="drawTitle">🎲 Team draw</strong><br><span data-i18n="drawDesc">Each participant gets a random team. If their team wins the World Cup, they get <strong>+10 pts bonus</strong>.</span></div>
         <button class="btn btn-g" onclick="assignTeams()" data-i18n="drawBtn">🎲 Draw teams</button>
+        <button class="btn btn-r btn-sm" onclick="resetTeams()" title="Borra todos los equipos asignados para poder reasignar">🔄 Reset equipos</button>
         <button class="btn btn-g" onclick="downloadReport()" style="background:#059669;border-color:#059669">📊 Download Report</button>
         <button class="btn btn-g admin-only" onclick="exportBackupXLSX()" style="background:#7C3AED;border-color:#7C3AED" title="Descargar backup completo en Excel">💾 Backup Excel</button>
       </div>
@@ -798,23 +799,20 @@ const GROUPS = {
   K:[['Portugal','🇵🇹'],['Colombia','🇨🇴'],['Uzbekistán','🇺🇿'],['R.D. del Congo','🇨🇩']],
   L:[['Inglaterra','🏴󠁧󠁢󠁥󠁮󠁧󠁿'],['Croacia','🇭🇷'],['Ghana','🇬🇭'],['Panamá','🇵🇦']],
 };
+// Equipos ordenados por ranking FIFA (jun 2025) — los primeros N se usan según participantes
 const ALL_TEAMS = [
-  // Grandes favoritos
-  ['Argentina','🇦🇷'],['Francia','🇫🇷'],['Brasil','🇧🇷'],['España','🇪🇸'],
-  ['Inglaterra','🏴󠁧󠁢󠁥󠁮󠁧󠁿'],['Alemania','🇩🇪'],['Portugal','🇵🇹'],['Países Bajos','🇳🇱'],
-  // Potencias
-  ['Bélgica','🇧🇪'],['México','🇲🇽'],['Uruguay','🇺🇾'],['USA','🇺🇸'],
-  ['Canadá','🇨🇦'],['Japón','🇯🇵'],['Marruecos','🇲🇦'],['Croacia','🇭🇷'],
-  ['Senegal','🇸🇳'],['Colombia','🇨🇴'],['Ecuador','🇪🇨'],['Corea del Sur','🇰🇷'],
-  // Competitivos
-  ['Suiza','🇨🇭'],['Noruega','🇳🇴'],['Austria','🇦🇹'],['Turquía','🇹🇷'],
-  ['Escocia','🏴󠁧󠁢󠁳󠁣󠁴󠁿'],['Suecia','🇸🇪'],['Irán','🇮🇷'],['Egipto','🇪🇬'],
-  ['Arabia Saudita','🇸🇦'],['Australia','🇦🇺'],['Ghana','🇬🇭'],['Túnez','🇹🇳'],
-  ['Argelia','🇩🇿'],['Costa de Marfil','🇨🇮'],['Paraguay','🇵🇾'],['Sudáfrica','🇿🇦'],
-  // Resto
-  ['Qatar','🇶🇦'],['República Checa','🇨🇿'],['Bosnia y Herz.','🇧🇦'],['Haití','🇭🇹'],
-  ['Jordania','🇯🇴'],['Uzbekistán','🇺🇿'],['Irak','🇮🇶'],['R.D. del Congo','🇨🇩'],
-  ['Nueva Zelanda','🇳🇿'],['Cabo Verde','🇨🇻'],['Curazao','🇨🇼'],['Panamá','🇵🇦'],
+  ['Argentina','🇦🇷'],['Francia','🇫🇷'],['España','🇪🇸'],['Inglaterra','🏴󠁧󠁢󠁥󠁮󠁧󠁿'],
+  ['Brasil','🇧🇷'],['Portugal','🇵🇹'],['Países Bajos','🇳🇱'],['Bélgica','🇧🇪'],
+  ['Alemania','🇩🇪'],['Colombia','🇨🇴'],['Uruguay','🇺🇾'],['Marruecos','🇲🇦'],
+  ['USA','🇺🇸'],['México','🇲🇽'],['Croacia','🇭🇷'],['Suiza','🇨🇭'],
+  ['Japón','🇯🇵'],['Senegal','🇸🇳'],['Corea del Sur','🇰🇷'],['Austria','🇦🇹'],
+  ['Australia','🇦🇺'],['Ecuador','🇪🇨'],['Canadá','🇨🇦'],['Turquía','🇹🇷'],
+  ['Noruega','🇳🇴'],['Suecia','🇸🇪'],['Túnez','🇹🇳'],['Argelia','🇩🇿'],
+  ['Irán','🇮🇷'],['Escocia','🏴󠁧󠁢󠁳󠁣󠁴󠁿'],['Costa de Marfil','🇨🇮'],['Ghana','🇬🇭'],
+  ['Uzbekistán','🇺🇿'],['Egipto','🇪🇬'],['Sudáfrica','🇿🇦'],['Paraguay','🇵🇾'],
+  ['República Checa','🇨🇿'],['Qatar','🇶🇦'],['Nueva Zelanda','🇳🇿'],['Arabia Saudita','🇸🇦'],
+  ['Jordania','🇯🇴'],['Bosnia y Herz.','🇧🇦'],['Panamá','🇵🇦'],['Irak','🇮🇶'],
+  ['Cabo Verde','🇨🇻'],['R.D. del Congo','🇨🇩'],['Haití','🇭🇹'],['Curazao','🇨🇼'],
 ];
 
 /* Flag map for team names */
@@ -1283,28 +1281,54 @@ function renderPlayers() {
 }
 
 /* ─── SORTEO ─── */
+function resetTeams() {
+  if (!isAdmin) return;
+  const con = confirm('⚠️ ¿Borrar TODOS los equipos asignados?\nEsto permite reasignar con el nuevo sistema FIFA.\n\nLas predicciones y puntos NO se borran.');
+  if (!con) return;
+
+  S.players.forEach(p => { p.team = null; p.teamFlag = null; });
+
+  if (DB) {
+    const upd = {};
+    S.players.forEach(p => {
+      upd[DB_PATH + '/players/' + p.id + '/team'] = null;
+      upd[DB_PATH + '/players/' + p.id + '/teamFlag'] = null;
+    });
+    DB.ref().update(upd).then(() => {
+      alert('✅ Equipos borrados. Ya puedes hacer el nuevo sorteo FIFA.');
+    });
+  } else {
+    localSave();
+    renderPlayers();
+    alert('✅ Equipos borrados. Ya puedes hacer el nuevo sorteo FIFA.');
+  }
+}
+
 function assignTeams() {
   if (!isAdmin) { alert(t('adminOnlyDraw')); return; }
   if (!S.players.length) { alert(t('addPlayersFirst')); return; }
 
   // Solo los jugadores SIN equipo asignado
   const sinEquipo = S.players.filter(p => !p.team);
-  if (!sinEquipo.length) { alert('✅ All participants already have a team assigned.'); return; }
+  if (!sinEquipo.length) { alert('All participants already have a team assigned.'); return; }
 
-  // Equipos ya usados para no repetir
+  // Pool = top N equipos FIFA donde N = total participantes
+  const totalJugadores = S.players.length;
+  const topN = ALL_TEAMS.slice(0, totalJugadores);
   const usados = S.players.filter(p => p.team).map(p => p.team);
-  const pool = [...ALL_TEAMS]
-    .filter(t => !usados.includes(t[0]))
-    .sort(() => Math.random() - .5);
+  const disponibles = topN.filter(tm => !usados.includes(tm[0])).sort(() => Math.random() - .5);
 
-  if (pool.length < sinEquipo.length) { alert('⚠️ Not enough teams available for all new players.'); return; }
+  if (disponibles.length < sinEquipo.length) { alert('Not enough top teams available.'); return; }
 
-  sinEquipo.forEach((p, i) => { const tm = pool[i]; p.team = tm[0]; p.teamFlag = tm[1]; });
+  sinEquipo.forEach((p, i) => { p.team = disponibles[i][0]; p.teamFlag = disponibles[i][1]; });
 
   if (DB) {
     const upd = {};
-    sinEquipo.forEach(p => upd[`${DB_PATH}/players/${p.id}`] = p);
-    firebase.database(firebase.app('polla')).ref().update(upd);
+    sinEquipo.forEach(p => {
+      upd[DB_PATH + '/players/' + p.id + '/team'] = p.team;
+      upd[DB_PATH + '/players/' + p.id + '/teamFlag'] = p.teamFlag;
+    });
+    DB.ref().update(upd);
   } else { localSave(); renderPlayers(); }
   showDrawModal();
 }
