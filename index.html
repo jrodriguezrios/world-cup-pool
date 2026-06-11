@@ -171,6 +171,8 @@ select option{background:white;}
 .pcard-you{position:absolute;top:7px;right:9px;font-size:10px;font-weight:700;background:rgba(0,61,165,0.1);color:var(--accent);padding:1px 6px;border-radius:4px;}
 .pcard-rm{position:absolute;top:7px;right:9px;background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;line-height:1;}
 .pcard-rm:hover{color:var(--danger);}
+.pcard-team-sel{font-size:11px;padding:3px 6px;border-radius:6px;border:1.5px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:3px;max-width:140px;}
+.pcard-team-sel:focus{border-color:var(--accent);outline:none;}
 
 /* ── SCORE RULES ── */
 .score-rules{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
@@ -1287,11 +1289,36 @@ function renderPlayers() {
         <div class="pcard-name">${p.name}${isMe && isAdmin ? '<span class="admin-pill">🔐 Admin</span>' : ''}</div>
         ${p.email ? `<div class="pcard-email">${p.email}</div>` : ''}
         <div class="pcard-team">${p.team ? p.teamFlag+' '+p.team : t('noTeam')}</div>
+        ${isAdmin ? `<select class="pcard-team-sel" onchange="assignTeamManual('${p.id}',this.value)">
+          <option value="">✏️ Cambiar equipo...</option>
+          ${ALL_TEAMS.map(tm => `<option value="${tm[0]}|${tm[1]}"${p.team===tm[0]?' selected':''}>${tm[1]} ${tm[0]}</option>`).join('')}
+        </select>` : ''}
       </div>
       ${p.team ? '<div class="pcard-badge">+10 pts 🏆</div>' : ''}
       ${isMe ? `<div class="pcard-you">${t('you')}</div>` : (isAdmin ? `<button class="pcard-rm" onclick="removePlayer('${p.id}')">×</button>` : '')}
     </div>`;
   }).join('');
+}
+
+/* ─── ASIGNACIÓN MANUAL ─── */
+function assignTeamManual(playerId, value) {
+  if (!isAdmin || !value) return;
+  const parts = value.split('|');
+  const team = parts[0];
+  const teamFlag = parts[1];
+  const taken = S.players.find(p => p.id !== playerId && p.team === team);
+  if (taken) {
+    alert('⚠️ ' + teamFlag + ' ' + team + ' ya está asignado a ' + taken.name);
+    renderPlayers();
+    return;
+  }
+  if (DB) {
+    DB.ref(DB_PATH + '/players/' + playerId + '/team').set(team);
+    DB.ref(DB_PATH + '/players/' + playerId + '/teamFlag').set(teamFlag);
+  } else {
+    const p = S.players.find(x => x.id === playerId);
+    if (p) { p.team = team; p.teamFlag = teamFlag; localSave(); renderPlayers(); }
+  }
 }
 
 /* ─── SORTEO ─── */
