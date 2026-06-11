@@ -1150,17 +1150,31 @@ function startApp() {
 }
 
 function ensurePlayerExists(u) {
-  const exists = S.players.find(p => p.id === u.id);
-  if (!exists) {
-    // Primera vez: guarda foto de Google como punto de partida
-    const p = {name:u.name, id:u.id, email:u.email, team:null, teamFlag:null, photo:u.photo||null};
-    if (DB) DB.ref(`${DB_PATH}/players/${u.id}`).set(p);
-    else { S.players.push(p); localSave(); }
+  if (DB) {
+    // Consultar Firebase directamente — NO usar S.players local.
+    // S.players puede estar vacío si Firebase no ha cargado aún (race condition).
+    // Sin este fix: detecta "no existe" → sobreescribe con team:null → borra el equipo.
+    DB.ref(`${DB_PATH}/players/${u.id}`).once('value', snap => {
+      if (!snap.exists()) {
+        // Jugador nuevo: crear con team null
+        const p = {name:u.name, id:u.id, email:u.email, team:null, teamFlag:null, photo:u.photo||null};
+        DB.ref(`${DB_PATH}/players/${u.id}`).set(p);
+      } else {
+        // Ya existe: SOLO actualizar nombre. Nunca tocar team/teamFlag/photo.
+        DB.ref(`${DB_PATH}/players/${u.id}/name`).set(u.name);
+      }
+    });
   } else {
-    // Ya existe: NUNCA sobreescribir la foto — el usuario puede haberla cambiado manualmente.
-    // Solo actualizamos el nombre por si cambió en Google.
-    if (DB) DB.ref(`${DB_PATH}/players/${u.id}/name`).set(u.name);
-    else { exists.name = u.name; localSave(); }
+    // Modo local: S.players siempre está cargado antes de llegar aquí
+    const exists = S.players.find(p => p.id === u.id);
+    if (!exists) {
+      const p = {name:u.name, id:u.id, email:u.email, team:null, teamFlag:null, photo:u.photo||null};
+      S.players.push(p);
+      localSave();
+    } else {
+      exists.name = u.name;
+      localSave();
+    }
   }
 }
 
