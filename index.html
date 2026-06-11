@@ -1286,11 +1286,24 @@ function renderPlayers() {
 function assignTeams() {
   if (!isAdmin) { alert(t('adminOnlyDraw')); return; }
   if (!S.players.length) { alert(t('addPlayersFirst')); return; }
-  const pool = [...ALL_TEAMS].sort(() => Math.random() - .5);
-  S.players.forEach((p, i) => { const t = pool[i % pool.length]; p.team = t[0]; p.teamFlag = t[1]; });
+
+  // Solo los jugadores SIN equipo asignado
+  const sinEquipo = S.players.filter(p => !p.team);
+  if (!sinEquipo.length) { alert('✅ All participants already have a team assigned.'); return; }
+
+  // Equipos ya usados para no repetir
+  const usados = S.players.filter(p => p.team).map(p => p.team);
+  const pool = [...ALL_TEAMS]
+    .filter(t => !usados.includes(t[0]))
+    .sort(() => Math.random() - .5);
+
+  if (pool.length < sinEquipo.length) { alert('⚠️ Not enough teams available for all new players.'); return; }
+
+  sinEquipo.forEach((p, i) => { const tm = pool[i]; p.team = tm[0]; p.teamFlag = tm[1]; });
+
   if (DB) {
     const upd = {};
-    S.players.forEach(p => upd[`${DB_PATH}/players/${p.id}`] = p);
+    sinEquipo.forEach(p => upd[`${DB_PATH}/players/${p.id}`] = p);
     firebase.database(firebase.app('polla')).ref().update(upd);
   } else { localSave(); renderPlayers(); }
   showDrawModal();
