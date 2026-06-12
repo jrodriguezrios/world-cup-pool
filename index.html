@@ -411,7 +411,7 @@ select option{background:white;}
   <button class="nav-btn active" onclick="showTab('registro',this)" data-i18n="navPlayers">👥 Players</button>
   <button class="nav-btn" onclick="showTab('grupos',this)" data-i18n="navGroups">🌎 Groups</button>
   <button class="nav-btn" onclick="showTab('partidos',this)" data-i18n="navPredictions">⚽ Predictions</button>
-  <button class="nav-btn admin-only" onclick="showTab('resultados',this)" data-i18n="navResults">📋 Results</button>
+  <button class="nav-btn" onclick="showTab('resultados',this)" data-i18n="navResults">📋 Results</button>
   <button class="nav-btn" onclick="showTab('tabla',this)" data-i18n="navLeaderboard">🏆 Leaderboard</button>
   <button class="nav-btn" onclick="showTab('manual',this)" data-i18n="navManual">📖 How to play</button>
   <button class="nav-btn admin-only" onclick="showTab('publicar',this)">🚀 Publish</button>
@@ -1459,7 +1459,8 @@ function onPlayerChange() {
 function renderMatchList() {
   const list = document.getElementById('matchesList');
   const savedScroll = window.scrollY;
-  const matches = MATCHES.filter(m => m.phase === S.activePhase);
+  const matches = MATCHES.filter(m => m.phase === S.activePhase)
+    .sort((a, b) => getMatchUTC(a) - getMatchUTC(b));
   if (!S.players.length) { list.innerHTML = `<div class="empty">${t('addFirst')}</div>`; return; }
   if (!S.currentPlayer) { list.innerHTML = `<div class="empty">${t('selectToSee')}</div>`; return; }
   refreshResolvedNames();
@@ -1494,17 +1495,40 @@ function matchCardHTML(m, showPred) {
   let ptsH = '';
   if (showPred && hasPred && hasRes) { const p=calcPts(pred,res); ptsH=`<span class="pts-chip pts-${p}">${p} pts</span>`; }
 
-  // Lock logic
-  const locked = showPred && isLocked(m);
+  // Lock logic — auto (10 min antes) + manual admin
+  const manualLocked = S.locks && S.locks[m.id];
+  const autoLocked = showPred && isLocked(m);
+  const locked = manualLocked || autoLocked;
   const isOwn = showPred && currentUser && S.currentPlayer === currentUser.id;
   const canEdit = !locked && (isAdmin || isOwn);
   const mins = showPred && !locked ? minsUntilLock(m) : 0;
 
+  // Lock badge: show in both tabs
   let lockBadge = '';
-  if (showPred) {
-    if (locked) lockBadge = `<span class="lock-badge">${t('locked')}</span>`;
+  if (manualLocked) {
+    lockBadge = `<span class="lock-badge">🔒 Bloqueado</span>`;
+  } else if (showPred) {
+    if (autoLocked) lockBadge = `<span class="lock-badge">${t('locked')}</span>`;
     else if (mins > 0 && mins <= 60) lockBadge = `<span class="lock-badge lock-warn">${t('closesIn')} ${mins} min</span>`;
   }
+
+  // Result display: admin sees editable inputs, players see read-only
+  const resSection = isAdmin
+    ? `<input class="sinp" type="number" min="0" max="20" id="rh${m.id}" value="${res.home!==undefined?res.home:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
+       <span class="ssep">:</span>
+       <input class="sinp" type="number" min="0" max="20" id="ra${m.id}" value="${res.away!==undefined?res.away:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">`
+    : hasRes
+      ? `<span class="sinp" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:rgba(0,61,165,0.06);border-color:var(--wc-blue)">${res.home}</span>
+         <span class="ssep">:</span>
+         <span class="sinp" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:rgba(0,61,165,0.06);border-color:var(--wc-blue)">${res.away}</span>`
+      : `<span class="sinp" style="display:flex;align-items:center;justify-content:center;color:var(--text3)">–</span>
+         <span class="ssep">:</span>
+         <span class="sinp" style="display:flex;align-items:center;justify-content:center;color:var(--text3)">–</span>`;
+
+  // Footer lock button for admin in results tab
+  const lockBtn = (!showPred && isAdmin)
+    ? `<button class="btn btn-sm ${manualLocked?'btn-r':'btn-g'}" style="margin-left:auto;font-size:11px" onclick="toggleLock(${m.id})">${manualLocked?'🔓 Desbloquear':'🔒 Bloquear'}</button>`
+    : '';
 
   return `<div class="mcard${locked ? ' locked' : ''}">
     <div class="mmeta">
@@ -1522,19 +1546,17 @@ function matchCardHTML(m, showPred) {
           <input class="sinp" type="number" min="0" max="20" id="ph${m.id}" value="${hp?pred.home:''}" placeholder="–" oninput="savePred(${m.id})" ${canEdit ? '' : 'disabled'}>
           <span class="ssep">:</span>
           <input class="sinp" type="number" min="0" max="20" id="pa${m.id}" value="${ap?pred.away:''}" placeholder="–" oninput="savePred(${m.id})" ${canEdit ? '' : 'disabled'}>
-        ` : `
-          <input class="sinp" type="number" min="0" max="20" id="rh${m.id}" value="${res.home!==undefined?res.home:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
-          <span class="ssep">:</span>
-          <input class="sinp" type="number" min="0" max="20" id="ra${m.id}" value="${res.away!==undefined?res.away:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
-        `}
+        ` : resSection}
       </div>
       <span class="team r">${renderTeam(getTeamName(m.id,'away'), true)}</span>
     </div>
     <div class="mfoot">
       ${showPred
         ? `<span class="mlbl">${isOwn ? t('yourPred') : t('prediction')}</span>${hasPred?`<span class="msaved">${t('saved')}</span>`:''}${ptsH}`
-        : `${hasRes ? `<span class="msaved">✓ ${res.home}–${res.away} ${t('saved')}</span>` : `<span class="mlbl">${t('noResult')}</span>`}
-           ${isAdmin ? `<button class="btn btn-sm ${(S.locks&&S.locks[m.id])?'btn-r':'btn-g'}" style="margin-left:auto;font-size:11px" onclick="toggleLock(${m.id})">${(S.locks&&S.locks[m.id])?'🔓 Desbloquear':'🔒 Bloquear'}</button>` : ''}`
+        : `${isAdmin
+            ? (hasRes ? `<span class="msaved">✓ ${res.home}–${res.away} ${t('saved')}</span>` : `<span class="mlbl">${t('noResult')}</span>`)
+            : (hasRes ? `<span class="msaved">✓ Resultado oficial</span>` : `<span class="mlbl">⏳ Pendiente</span>`)
+          }${lockBtn}`
       }
     </div>
   </div>`;
@@ -1572,7 +1594,8 @@ function setResPhase(ph) { resPhase = ph; renderResultados(); }
 function renderResultList() {
   refreshResolvedNames();
   const list = document.getElementById('resultsList');
-  const matches = MATCHES.filter(m => m.phase === resPhase);
+  const matches = MATCHES.filter(m => m.phase === resPhase)
+    .sort((a, b) => getMatchUTC(a) - getMatchUTC(b));
   const champ = resPhase === 'Final' ? `
     <div class="card" style="border-left:4px solid var(--wc-gold);">
       <div class="card-title" style="color:var(--gold)">${t('champTitle')}</div>
@@ -1589,15 +1612,12 @@ function renderResultList() {
 function toggleLock(matchId) {
   if (!isAdmin) return;
   const current = S.locks && S.locks[matchId];
-  const newVal = !current;
   if (DB) {
-    DB.ref(DB_PATH + '/locks/' + matchId).set(newVal ? true : null);
+    DB.ref(DB_PATH + '/locks/' + matchId).set(!current ? true : null);
   } else {
     if (!S.locks) S.locks = {};
-    S.locks[matchId] = newVal;
-    localSave();
-    renderResultList();
-    renderMatchList();
+    if (!current) S.locks[matchId] = true; else delete S.locks[matchId];
+    localSave(); renderResultList(); renderMatchList();
   }
 }
 
