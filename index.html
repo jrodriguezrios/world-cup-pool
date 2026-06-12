@@ -475,18 +475,25 @@ select option{background:white;}
 
   <!-- ── RESULTADOS (admin only) ── -->
   <div id="tab-resultados" class="section">
-    <div class="card" style="border-left:4px solid var(--success);">
-      <div class="card-title" style="color:var(--success)" data-i18n="autoUpdateTitle">🤖 Automatic updates</div>
-      <div class="card-sub" data-i18n="autoUpdateDesc">Results are fetched automatically from football-data.org every 5 minutes. You can also force a manual update.</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;">
-        <button class="btn btn-g" onclick="fetchAPIResults()" id="autoUpdateBtn" data-i18n="autoUpdateBtn">🔄 Update results now</button>
-        <span id="autoUpdateStatus" style="font-size:12px;color:var(--text3)"></span>
+    <!-- Admin only: auto-update controls -->
+    <div class="admin-only">
+      <div class="card" style="border-left:4px solid var(--success);">
+        <div class="card-title" style="color:var(--success)" data-i18n="autoUpdateTitle">🤖 Automatic updates</div>
+        <div class="card-sub" data-i18n="autoUpdateDesc">Results are fetched automatically from football-data.org every 5 minutes. You can also force a manual update.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+          <button class="btn btn-g" onclick="fetchAPIResults()" id="autoUpdateBtn" data-i18n="autoUpdateBtn">🔄 Update results now</button>
+          <span id="autoUpdateStatus" style="font-size:12px;color:var(--text3)"></span>
+        </div>
+        <div id="autoUpdateLog" style="margin-top:8px;font-size:12px;color:var(--text2);display:none;background:var(--bg3);border-radius:8px;padding:10px;max-height:120px;overflow-y:auto;"></div>
       </div>
-      <div id="autoUpdateLog" style="margin-top:8px;font-size:12px;color:var(--text2);display:none;background:var(--bg3);border-radius:8px;padding:10px;max-height:120px;overflow-y:auto;"></div>
+      <div class="card" style="border-left:4px solid var(--wc-red);">
+        <div class="card-title" style="color:var(--wc-red)" data-i18n="resultsTitle">📋 Official results</div>
+        <div class="card-sub" data-i18n="resultsDesc">Auto results appear here. You can also manually enter or correct scores.</div>
+      </div>
     </div>
-    <div class="card" style="border-left:4px solid var(--wc-red);">
-      <div class="card-title" style="color:var(--wc-red)" data-i18n="resultsTitle">📋 Official results</div>
-      <div class="card-sub" data-i18n="resultsDesc">Auto results appear here. You can also manually enter or correct scores.</div>
+    <!-- Players: just see the results -->
+    <div class="player-only" style="padding:10px 0 4px">
+      <div style="font-size:13px;color:var(--text2);font-weight:600;margin-bottom:8px;">📋 Resultados oficiales de los partidos</div>
     </div>
     <div class="phase-row" id="resPhTabs"></div>
     <div id="resultsList"></div>
@@ -836,94 +843,94 @@ const FLAG_MAP = {
 function flag(name) { return FLAG_MAP[name] || ''; }
 const MATCHES = [
   // ── JUN 11 (Jue) ──
-  {id:1,group:'A',phase:'Grupos',home:'México',away:'Sudáfrica',date:'Jue 11 Jun',venue:'Estadio Azteca, CDMX',time:'13:00',tz:'CDMX'},
+  {id:1,group:'A',phase:'Grupos',home:'México',away:'Sudáfrica',date:'Jue 11 Jun',venue:'Estadio Azteca, CDMX',time:'15:00',tz:'CDMX'},
   // ── JUN 12 (Vie) ──
   {id:7,group:'B',phase:'Grupos',home:'Canadá',away:'Bosnia y Herz.',date:'Vie 12 Jun',venue:'BMO Field, Toronto',time:'15:00',tz:'Toronto'},
   {id:19,group:'D',phase:'Grupos',home:'USA',away:'Paraguay',date:'Vie 12 Jun',venue:'SoFi Stadium, Los Ángeles',time:'21:00',tz:'LA'},
-  {id:2,group:'A',phase:'Grupos',home:'Corea del Sur',away:'Rep. Checa',date:'Jue 11 Jun',venue:'Estadio Akron, Guadalajara',time:'20:00',tz:'GDL'},
+  {id:2,group:'A',phase:'Grupos',home:'Corea del Sur',away:'Rep. Checa',date:'Vie 12 Jun',venue:'Estadio Akron, Guadalajara',time:'22:00',tz:'GDL'},
   // ── JUN 13 (Sáb) ──
-  {id:8,group:'B',phase:'Grupos',home:'Qatar',away:'Suiza',date:'Sáb 13 Jun',venue:"Levi's Stadium, San Francisco",time:'12:00',tz:'SF'},
+  {id:8,group:'B',phase:'Grupos',home:'Qatar',away:'Suiza',date:'Sáb 13 Jun',venue:"Levi's Stadium, San Francisco",time:'15:00',tz:'SF'},
   {id:13,group:'C',phase:'Grupos',home:'Brasil',away:'Marruecos',date:'Sáb 13 Jun',venue:'MetLife Stadium, Nueva York/NJ',time:'18:00',tz:'NYC'},
   {id:14,group:'C',phase:'Grupos',home:'Haití',away:'Escocia',date:'Sáb 13 Jun',venue:'Gillette Stadium, Boston',time:'21:00',tz:'Boston'},
   {id:20,group:'D',phase:'Grupos',home:'Australia',away:'Turquía',date:'Sáb 13 Jun',venue:'BC Place, Vancouver',time:'00:00',tz:'Vancouver'},
   // ── JUN 14 (Dom) ──
-  {id:25,group:'E',phase:'Grupos',home:'Alemania',away:'Curazao',date:'Dom 14 Jun',venue:'NRG Stadium, Houston',time:'12:00',tz:'Houston'},
-  {id:31,group:'F',phase:'Grupos',home:'Países Bajos',away:'Japón',date:'Dom 14 Jun',venue:'AT&T Stadium, Dallas',time:'15:00',tz:'Dallas'},
+  {id:25,group:'E',phase:'Grupos',home:'Alemania',away:'Curazao',date:'Dom 14 Jun',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
+  {id:31,group:'F',phase:'Grupos',home:'Países Bajos',away:'Japón',date:'Dom 14 Jun',venue:'AT&T Stadium, Dallas',time:'16:00',tz:'Dallas'},
   {id:26,group:'E',phase:'Grupos',home:'Costa de Marfil',away:'Ecuador',date:'Dom 14 Jun',venue:'Lincoln Financial, Filadelfia',time:'19:00',tz:'Philly'},
-  {id:32,group:'F',phase:'Grupos',home:'Túnez',away:'Suecia',date:'Dom 14 Jun',venue:'Estadio BBVA, Monterrey',time:'20:00',tz:'MTY'},
+  {id:32,group:'F',phase:'Grupos',home:'Túnez',away:'Suecia',date:'Dom 14 Jun',venue:'Estadio BBVA, Monterrey',time:'22:00',tz:'MTY'},
   // ── JUN 15 (Lun) ──
   {id:43,group:'H',phase:'Grupos',home:'España',away:'Cabo Verde',date:'Lun 15 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
-  {id:37,group:'G',phase:'Grupos',home:'Bélgica',away:'Egipto',date:'Lun 15 Jun',venue:'Lumen Field, Seattle',time:'12:00',tz:'Seattle'},
+  {id:37,group:'G',phase:'Grupos',home:'Bélgica',away:'Egipto',date:'Lun 15 Jun',venue:'BC Place, Vancouver',time:'15:00',tz:'Vancouver'},
   {id:44,group:'H',phase:'Grupos',home:'Arabia Saudita',away:'Uruguay',date:'Lun 15 Jun',venue:'Hard Rock Stadium, Miami',time:'18:00',tz:'Miami'},
-  {id:38,group:'G',phase:'Grupos',home:'Irán',away:'Nueva Zelanda',date:'Lun 15 Jun',venue:'SoFi Stadium, Los Ángeles',time:'18:00',tz:'LA'},
+  {id:38,group:'G',phase:'Grupos',home:'Irán',away:'Nueva Zelanda',date:'Lun 15 Jun',venue:'SoFi Stadium, Los Ángeles',time:'21:00',tz:'LA'},
   // ── JUN 16 (Mar) ──
   {id:49,group:'I',phase:'Grupos',home:'Francia',away:'Senegal',date:'Mar 16 Jun',venue:'MetLife Stadium, Nueva York/NJ',time:'15:00',tz:'NYC'},
   {id:50,group:'I',phase:'Grupos',home:'Irak',away:'Noruega',date:'Mar 16 Jun',venue:'Gillette Stadium, Boston',time:'18:00',tz:'Boston'},
-  {id:55,group:'J',phase:'Grupos',home:'Argentina',away:'Argelia',date:'Mar 16 Jun',venue:'Arrowhead Stadium, Kansas City',time:'20:00',tz:'KC'},
+  {id:55,group:'J',phase:'Grupos',home:'Argentina',away:'Argelia',date:'Mar 16 Jun',venue:'Arrowhead Stadium, Kansas City',time:'21:00',tz:'KC'},
   {id:56,group:'J',phase:'Grupos',home:'Austria',away:'Jordania',date:'Mar 16 Jun',venue:"Levi's Stadium, San Francisco",time:'00:00',tz:'SF'},
   // ── JUN 17 (Mié) ──
-  {id:61,group:'K',phase:'Grupos',home:'Portugal',away:'R.D. del Congo',date:'Mié 17 Jun',venue:'NRG Stadium, Houston',time:'12:00',tz:'Houston'},
-  {id:67,group:'L',phase:'Grupos',home:'Inglaterra',away:'Croacia',date:'Mié 17 Jun',venue:'AT&T Stadium, Dallas',time:'15:00',tz:'Dallas'},
+  {id:61,group:'K',phase:'Grupos',home:'Portugal',away:'R.D. del Congo',date:'Mié 17 Jun',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
+  {id:67,group:'L',phase:'Grupos',home:'Inglaterra',away:'Croacia',date:'Mié 17 Jun',venue:'AT&T Stadium, Dallas',time:'16:00',tz:'Dallas'},
   {id:68,group:'L',phase:'Grupos',home:'Ghana',away:'Panamá',date:'Mié 17 Jun',venue:'BMO Field, Toronto',time:'19:00',tz:'Toronto'},
-  {id:62,group:'K',phase:'Grupos',home:'Uzbekistán',away:'Colombia',date:'Mié 17 Jun',venue:'Estadio Azteca, CDMX',time:'20:00',tz:'CDMX'},
+  {id:62,group:'K',phase:'Grupos',home:'Uzbekistán',away:'Colombia',date:'Mié 17 Jun',venue:'Estadio Azteca, CDMX',time:'22:00',tz:'CDMX'},
   // ── JUN 18 (Jue) ──
   {id:3,group:'A',phase:'Grupos',home:'Rep. Checa',away:'Sudáfrica',date:'Jue 18 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
-  {id:9,group:'B',phase:'Grupos',home:'Suiza',away:'Bosnia y Herz.',date:'Jue 18 Jun',venue:'SoFi Stadium, Los Ángeles',time:'12:00',tz:'LA'},
-  {id:10,group:'B',phase:'Grupos',home:'Canadá',away:'Qatar',date:'Jue 18 Jun',venue:'BC Place, Vancouver',time:'15:00',tz:'Vancouver'},
-  {id:4,group:'A',phase:'Grupos',home:'México',away:'Corea del Sur',date:'Jue 18 Jun',venue:'Estadio Akron, Guadalajara',time:'19:00',tz:'GDL'},
+  {id:9,group:'B',phase:'Grupos',home:'Suiza',away:'Bosnia y Herz.',date:'Jue 18 Jun',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
+  {id:10,group:'B',phase:'Grupos',home:'Canadá',away:'Qatar',date:'Jue 18 Jun',venue:'BC Place, Vancouver',time:'18:00',tz:'Vancouver'},
+  {id:4,group:'A',phase:'Grupos',home:'México',away:'Corea del Sur',date:'Jue 18 Jun',venue:'Estadio Akron, Guadalajara',time:'21:00',tz:'GDL'},
   // ── JUN 19 (Vie) ──
   {id:15,group:'C',phase:'Grupos',home:'Escocia',away:'Marruecos',date:'Vie 19 Jun',venue:'Gillette Stadium, Boston',time:'15:00',tz:'Boston'},
-  {id:21,group:'D',phase:'Grupos',home:'USA',away:'Australia',date:'Vie 19 Jun',venue:'Lumen Field, Seattle',time:'12:00',tz:'Seattle'},
-  {id:16,group:'C',phase:'Grupos',home:'Brasil',away:'Haití',date:'Vie 19 Jun',venue:'Lincoln Financial, Filadelfia',time:'21:00',tz:'Philly'},
+  {id:21,group:'D',phase:'Grupos',home:'USA',away:'Australia',date:'Vie 19 Jun',venue:'Lumen Field, Seattle',time:'15:00',tz:'Seattle'},
+  {id:16,group:'C',phase:'Grupos',home:'Brasil',away:'Haití',date:'Vie 19 Jun',venue:'Lincoln Financial, Filadelfia',time:'18:00',tz:'Philly'},
   {id:22,group:'D',phase:'Grupos',home:'Turquía',away:'Paraguay',date:'Vie 19 Jun',venue:"Levi's Stadium, San Francisco",time:'00:00',tz:'SF'},
   // ── JUN 20 (Sáb) ──
-  {id:33,group:'F',phase:'Grupos',home:'Países Bajos',away:'Suecia',date:'Sáb 20 Jun',venue:'NRG Stadium, Houston',time:'12:00',tz:'Houston'},
+  {id:33,group:'F',phase:'Grupos',home:'Países Bajos',away:'Suecia',date:'Sáb 20 Jun',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
   {id:27,group:'E',phase:'Grupos',home:'Alemania',away:'Costa de Marfil',date:'Sáb 20 Jun',venue:'BMO Field, Toronto',time:'16:00',tz:'Toronto'},
-  {id:28,group:'E',phase:'Grupos',home:'Ecuador',away:'Curazao',date:'Sáb 20 Jun',venue:'Arrowhead Stadium, Kansas City',time:'19:00',tz:'KC'},
+  {id:28,group:'E',phase:'Grupos',home:'Ecuador',away:'Curazao',date:'Sáb 20 Jun',venue:'Arrowhead Stadium, Kansas City',time:'20:00',tz:'KC'},
   {id:34,group:'F',phase:'Grupos',home:'Túnez',away:'Japón',date:'Sáb 20 Jun',venue:'Estadio BBVA, Monterrey',time:'00:00',tz:'MTY'},
   // ── JUN 21 (Dom) ──
   {id:45,group:'H',phase:'Grupos',home:'España',away:'Arabia Saudita',date:'Dom 21 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
-  {id:39,group:'G',phase:'Grupos',home:'Bélgica',away:'Irán',date:'Dom 21 Jun',venue:'SoFi Stadium, Los Ángeles',time:'12:00',tz:'LA'},
+  {id:39,group:'G',phase:'Grupos',home:'Bélgica',away:'Irán',date:'Dom 21 Jun',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
   {id:46,group:'H',phase:'Grupos',home:'Uruguay',away:'Cabo Verde',date:'Dom 21 Jun',venue:'Hard Rock Stadium, Miami',time:'18:00',tz:'Miami'},
-  {id:40,group:'G',phase:'Grupos',home:'Nueva Zelanda',away:'Egipto',date:'Dom 21 Jun',venue:'BC Place, Vancouver',time:'18:00',tz:'Vancouver'},
+  {id:40,group:'G',phase:'Grupos',home:'Nueva Zelanda',away:'Egipto',date:'Dom 21 Jun',venue:'BC Place, Vancouver',time:'21:00',tz:'Vancouver'},
   // ── JUN 22 (Lun) ──
-  {id:57,group:'J',phase:'Grupos',home:'Argentina',away:'Austria',date:'Lun 22 Jun',venue:'AT&T Stadium, Dallas',time:'12:00',tz:'Dallas'},
+  {id:57,group:'J',phase:'Grupos',home:'Argentina',away:'Austria',date:'Lun 22 Jun',venue:'AT&T Stadium, Dallas',time:'13:00',tz:'Dallas'},
   {id:51,group:'I',phase:'Grupos',home:'Francia',away:'Irak',date:'Lun 22 Jun',venue:'Lincoln Financial, Filadelfia',time:'17:00',tz:'Philly'},
   {id:52,group:'I',phase:'Grupos',home:'Noruega',away:'Senegal',date:'Lun 22 Jun',venue:'MetLife Stadium, Nueva York/NJ',time:'20:00',tz:'NYC'},
-  {id:58,group:'J',phase:'Grupos',home:'Jordania',away:'Argelia',date:'Lun 22 Jun',venue:"Levi's Stadium, San Francisco",time:'20:00',tz:'SF'},
+  {id:58,group:'J',phase:'Grupos',home:'Jordania',away:'Argelia',date:'Lun 22 Jun',venue:"Levi's Stadium, San Francisco",time:'23:00',tz:'SF'},
   // ── JUN 23 (Mar) ──
-  {id:63,group:'K',phase:'Grupos',home:'Portugal',away:'Uzbekistán',date:'Mar 23 Jun',venue:'NRG Stadium, Houston',time:'12:00',tz:'Houston'},
+  {id:63,group:'K',phase:'Grupos',home:'Portugal',away:'Uzbekistán',date:'Mar 23 Jun',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
   {id:69,group:'L',phase:'Grupos',home:'Inglaterra',away:'Ghana',date:'Mar 23 Jun',venue:'Gillette Stadium, Boston',time:'16:00',tz:'Boston'},
   {id:70,group:'L',phase:'Grupos',home:'Panamá',away:'Croacia',date:'Mar 23 Jun',venue:'BMO Field, Toronto',time:'19:00',tz:'Toronto'},
-  {id:64,group:'K',phase:'Grupos',home:'Colombia',away:'R.D. del Congo',date:'Mar 23 Jun',venue:'Estadio Akron, Guadalajara',time:'20:00',tz:'GDL'},
+  {id:64,group:'K',phase:'Grupos',home:'Colombia',away:'R.D. del Congo',date:'Mar 23 Jun',venue:'Estadio Akron, Guadalajara',time:'22:00',tz:'GDL'},
   // ── JUN 24 (Mié) — jornada simultánea ──
-  {id:11,group:'B',phase:'Grupos',home:'Suiza',away:'Canadá',date:'Mié 24 Jun',venue:'BC Place, Vancouver',time:'12:00',tz:'Vancouver'},
-  {id:12,group:'B',phase:'Grupos',home:'Bosnia y Herz.',away:'Qatar',date:'Mié 24 Jun',venue:'Lumen Field, Seattle',time:'12:00',tz:'Seattle'},
+  {id:11,group:'B',phase:'Grupos',home:'Suiza',away:'Canadá',date:'Mié 24 Jun',venue:'BC Place, Vancouver',time:'15:00',tz:'Vancouver'},
+  {id:12,group:'B',phase:'Grupos',home:'Bosnia y Herz.',away:'Qatar',date:'Mié 24 Jun',venue:'Lumen Field, Seattle',time:'15:00',tz:'Seattle'},
   {id:17,group:'C',phase:'Grupos',home:'Escocia',away:'Brasil',date:'Mié 24 Jun',venue:'Hard Rock Stadium, Miami',time:'18:00',tz:'Miami'},
   {id:18,group:'C',phase:'Grupos',home:'Marruecos',away:'Haití',date:'Mié 24 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'18:00',tz:'Atlanta'},
-  {id:5,group:'A',phase:'Grupos',home:'Rep. Checa',away:'México',date:'Mié 24 Jun',venue:'Estadio Azteca, CDMX',time:'19:00',tz:'CDMX'},
-  {id:6,group:'A',phase:'Grupos',home:'Sudáfrica',away:'Corea del Sur',date:'Mié 24 Jun',venue:'Estadio BBVA, Monterrey',time:'19:00',tz:'MTY'},
+  {id:5,group:'A',phase:'Grupos',home:'Rep. Checa',away:'México',date:'Mié 24 Jun',venue:'Estadio Azteca, CDMX',time:'21:00',tz:'CDMX'},
+  {id:6,group:'A',phase:'Grupos',home:'Sudáfrica',away:'Corea del Sur',date:'Mié 24 Jun',venue:'Estadio BBVA, Monterrey',time:'21:00',tz:'MTY'},
   // ── JUN 25 (Jue) ──
   {id:29,group:'E',phase:'Grupos',home:'Ecuador',away:'Alemania',date:'Jue 25 Jun',venue:'MetLife Stadium, Nueva York/NJ',time:'16:00',tz:'NYC'},
   {id:30,group:'E',phase:'Grupos',home:'Curazao',away:'Costa de Marfil',date:'Jue 25 Jun',venue:'Lincoln Financial, Filadelfia',time:'16:00',tz:'Philly'},
-  {id:35,group:'F',phase:'Grupos',home:'Japón',away:'Suecia',date:'Jue 25 Jun',venue:'AT&T Stadium, Dallas',time:'18:00',tz:'Dallas'},
-  {id:36,group:'F',phase:'Grupos',home:'Túnez',away:'Países Bajos',date:'Jue 25 Jun',venue:'Arrowhead Stadium, Kansas City',time:'18:00',tz:'KC'},
-  {id:23,group:'D',phase:'Grupos',home:'Turquía',away:'USA',date:'Jue 25 Jun',venue:'SoFi Stadium, Los Ángeles',time:'19:00',tz:'LA'},
-  {id:24,group:'D',phase:'Grupos',home:'Paraguay',away:'Australia',date:'Jue 25 Jun',venue:"Levi's Stadium, San Francisco",time:'19:00',tz:'SF'},
+  {id:35,group:'F',phase:'Grupos',home:'Japón',away:'Suecia',date:'Jue 25 Jun',venue:'AT&T Stadium, Dallas',time:'19:00',tz:'Dallas'},
+  {id:36,group:'F',phase:'Grupos',home:'Túnez',away:'Países Bajos',date:'Jue 25 Jun',venue:'Arrowhead Stadium, Kansas City',time:'19:00',tz:'KC'},
+  {id:23,group:'D',phase:'Grupos',home:'Turquía',away:'USA',date:'Jue 25 Jun',venue:'SoFi Stadium, Los Ángeles',time:'22:00',tz:'LA'},
+  {id:24,group:'D',phase:'Grupos',home:'Paraguay',away:'Australia',date:'Jue 25 Jun',venue:"Levi's Stadium, San Francisco",time:'22:00',tz:'SF'},
   // ── JUN 26 (Vie) ──
   {id:53,group:'I',phase:'Grupos',home:'Noruega',away:'Francia',date:'Vie 26 Jun',venue:'Gillette Stadium, Boston',time:'15:00',tz:'Boston'},
   {id:54,group:'I',phase:'Grupos',home:'Senegal',away:'Irak',date:'Vie 26 Jun',venue:'BMO Field, Toronto',time:'15:00',tz:'Toronto'},
   {id:41,group:'G',phase:'Grupos',home:'Egipto',away:'Irán',date:'Vie 26 Jun',venue:'Lumen Field, Seattle',time:'20:00',tz:'Seattle'},
   {id:42,group:'G',phase:'Grupos',home:'Nueva Zelanda',away:'Bélgica',date:'Vie 26 Jun',venue:'BC Place, Vancouver',time:'20:00',tz:'Vancouver'},
-  {id:47,group:'H',phase:'Grupos',home:'Uruguay',away:'España',date:'Vie 26 Jun',venue:'Estadio Akron, Guadalajara',time:'18:00',tz:'GDL'},
-  {id:48,group:'H',phase:'Grupos',home:'Cabo Verde',away:'Arabia Saudita',date:'Vie 26 Jun',venue:'NRG Stadium, Houston',time:'19:00',tz:'Houston'},
+  {id:47,group:'H',phase:'Grupos',home:'Uruguay',away:'España',date:'Vie 26 Jun',venue:'Estadio Akron, Guadalajara',time:'20:00',tz:'GDL'},
+  {id:48,group:'H',phase:'Grupos',home:'Cabo Verde',away:'Arabia Saudita',date:'Vie 26 Jun',venue:'NRG Stadium, Houston',time:'20:00',tz:'Houston'},
   // ── JUN 27 (Sáb) ──
   {id:71,group:'L',phase:'Grupos',home:'Panamá',away:'Inglaterra',date:'Sáb 27 Jun',venue:'MetLife Stadium, Nueva York/NJ',time:'17:00',tz:'NYC'},
   {id:72,group:'L',phase:'Grupos',home:'Croacia',away:'Ghana',date:'Sáb 27 Jun',venue:'Lincoln Financial, Filadelfia',time:'17:00',tz:'Philly'},
   {id:65,group:'K',phase:'Grupos',home:'Colombia',away:'Portugal',date:'Sáb 27 Jun',venue:'Hard Rock Stadium, Miami',time:'19:30',tz:'Miami'},
   {id:66,group:'K',phase:'Grupos',home:'R.D. del Congo',away:'Uzbekistán',date:'Sáb 27 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'19:30',tz:'Atlanta'},
-  {id:59,group:'J',phase:'Grupos',home:'Argelia',away:'Austria',date:'Sáb 27 Jun',venue:'Arrowhead Stadium, Kansas City',time:'21:00',tz:'KC'},
-  {id:60,group:'J',phase:'Grupos',home:'Jordania',away:'Argentina',date:'Sáb 27 Jun',venue:'AT&T Stadium, Dallas',time:'21:00',tz:'Dallas'},
+  {id:59,group:'J',phase:'Grupos',home:'Argelia',away:'Austria',date:'Sáb 27 Jun',venue:'Arrowhead Stadium, Kansas City',time:'22:00',tz:'KC'},
+  {id:60,group:'J',phase:'Grupos',home:'Jordania',away:'Argentina',date:'Sáb 27 Jun',venue:'AT&T Stadium, Dallas',time:'22:00',tz:'Dallas'},
   // ── RONDA DE 32 ──
   {id:73,group:'Oct',phase:'Octavos',home:'2° Grupo A',away:'2° Grupo B',date:'Dom 28 Jun',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
   {id:74,group:'Oct',phase:'Octavos',home:'1° Grupo E',away:'3° Mejor',date:'Lun 29 Jun',venue:'Gillette Stadium, Boston',time:'16:30',tz:'Boston'},
@@ -1495,40 +1502,17 @@ function matchCardHTML(m, showPred) {
   let ptsH = '';
   if (showPred && hasPred && hasRes) { const p=calcPts(pred,res); ptsH=`<span class="pts-chip pts-${p}">${p} pts</span>`; }
 
-  // Lock logic — auto (10 min antes) + manual admin
-  const manualLocked = S.locks && S.locks[m.id];
-  const autoLocked = showPred && isLocked(m);
-  const locked = manualLocked || autoLocked;
+  // Lock logic
+  const locked = showPred && isLocked(m);
   const isOwn = showPred && currentUser && S.currentPlayer === currentUser.id;
   const canEdit = !locked && (isAdmin || isOwn);
   const mins = showPred && !locked ? minsUntilLock(m) : 0;
 
-  // Lock badge: show in both tabs
   let lockBadge = '';
-  if (manualLocked) {
-    lockBadge = `<span class="lock-badge">🔒 Bloqueado</span>`;
-  } else if (showPred) {
-    if (autoLocked) lockBadge = `<span class="lock-badge">${t('locked')}</span>`;
+  if (showPred) {
+    if (locked) lockBadge = `<span class="lock-badge">${t('locked')}</span>`;
     else if (mins > 0 && mins <= 60) lockBadge = `<span class="lock-badge lock-warn">${t('closesIn')} ${mins} min</span>`;
   }
-
-  // Result display: admin sees editable inputs, players see read-only
-  const resSection = isAdmin
-    ? `<input class="sinp" type="number" min="0" max="20" id="rh${m.id}" value="${res.home!==undefined?res.home:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
-       <span class="ssep">:</span>
-       <input class="sinp" type="number" min="0" max="20" id="ra${m.id}" value="${res.away!==undefined?res.away:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">`
-    : hasRes
-      ? `<span class="sinp" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:rgba(0,61,165,0.06);border-color:var(--wc-blue)">${res.home}</span>
-         <span class="ssep">:</span>
-         <span class="sinp" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:rgba(0,61,165,0.06);border-color:var(--wc-blue)">${res.away}</span>`
-      : `<span class="sinp" style="display:flex;align-items:center;justify-content:center;color:var(--text3)">–</span>
-         <span class="ssep">:</span>
-         <span class="sinp" style="display:flex;align-items:center;justify-content:center;color:var(--text3)">–</span>`;
-
-  // Footer lock button for admin in results tab
-  const lockBtn = (!showPred && isAdmin)
-    ? `<button class="btn btn-sm ${manualLocked?'btn-r':'btn-g'}" style="margin-left:auto;font-size:11px" onclick="toggleLock(${m.id})">${manualLocked?'🔓 Desbloquear':'🔒 Bloquear'}</button>`
-    : '';
 
   return `<div class="mcard${locked ? ' locked' : ''}">
     <div class="mmeta">
@@ -1546,17 +1530,18 @@ function matchCardHTML(m, showPred) {
           <input class="sinp" type="number" min="0" max="20" id="ph${m.id}" value="${hp?pred.home:''}" placeholder="–" oninput="savePred(${m.id})" ${canEdit ? '' : 'disabled'}>
           <span class="ssep">:</span>
           <input class="sinp" type="number" min="0" max="20" id="pa${m.id}" value="${ap?pred.away:''}" placeholder="–" oninput="savePred(${m.id})" ${canEdit ? '' : 'disabled'}>
-        ` : resSection}
+        ` : `
+          <input class="sinp" type="number" min="0" max="20" id="rh${m.id}" value="${res.home!==undefined?res.home:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
+          <span class="ssep">:</span>
+          <input class="sinp" type="number" min="0" max="20" id="ra${m.id}" value="${res.away!==undefined?res.away:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
+        `}
       </div>
       <span class="team r">${renderTeam(getTeamName(m.id,'away'), true)}</span>
     </div>
     <div class="mfoot">
       ${showPred
         ? `<span class="mlbl">${isOwn ? t('yourPred') : t('prediction')}</span>${hasPred?`<span class="msaved">${t('saved')}</span>`:''}${ptsH}`
-        : `${isAdmin
-            ? (hasRes ? `<span class="msaved">✓ ${res.home}–${res.away} ${t('saved')}</span>` : `<span class="mlbl">${t('noResult')}</span>`)
-            : (hasRes ? `<span class="msaved">✓ Resultado oficial</span>` : `<span class="mlbl">⏳ Pendiente</span>`)
-          }${lockBtn}`
+        : `${hasRes ? `<span class="msaved">✓ ${res.home}–${res.away} ${t('saved')}</span>` : `<span class="mlbl">${t('noResult')}</span>`}`
       }
     </div>
   </div>`;
@@ -1612,13 +1597,8 @@ function renderResultList() {
 function toggleLock(matchId) {
   if (!isAdmin) return;
   const current = S.locks && S.locks[matchId];
-  if (DB) {
-    DB.ref(DB_PATH + '/locks/' + matchId).set(!current ? true : null);
-  } else {
-    if (!S.locks) S.locks = {};
-    if (!current) S.locks[matchId] = true; else delete S.locks[matchId];
-    localSave(); renderResultList(); renderMatchList();
-  }
+  if (DB) { DB.ref(DB_PATH + '/locks/' + matchId).set(!current ? true : null); }
+  else { if (!S.locks) S.locks={}; if (!current) S.locks[matchId]=true; else delete S.locks[matchId]; localSave(); renderResultList(); renderMatchList(); }
 }
 
 function saveResult(id) {
