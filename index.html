@@ -1530,10 +1530,18 @@ function matchCardHTML(m, showPred) {
           <input class="sinp" type="number" min="0" max="20" id="ph${m.id}" value="${hp?pred.home:''}" placeholder="–" oninput="savePred(${m.id})" ${canEdit ? '' : 'disabled'}>
           <span class="ssep">:</span>
           <input class="sinp" type="number" min="0" max="20" id="pa${m.id}" value="${ap?pred.away:''}" placeholder="–" oninput="savePred(${m.id})" ${canEdit ? '' : 'disabled'}>
-        ` : `
+        ` : isAdmin ? `
           <input class="sinp" type="number" min="0" max="20" id="rh${m.id}" value="${res.home!==undefined?res.home:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
           <span class="ssep">:</span>
           <input class="sinp" type="number" min="0" max="20" id="ra${m.id}" value="${res.away!==undefined?res.away:''}" placeholder="–" oninput="saveResult(${m.id})" style="${hasRes?'border-color:var(--wc-blue)':''}">
+        ` : hasRes ? `
+          <span class="sinp" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:rgba(0,61,165,0.06);border-color:var(--wc-blue);pointer-events:none">${res.home}</span>
+          <span class="ssep">:</span>
+          <span class="sinp" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:rgba(0,61,165,0.06);border-color:var(--wc-blue);pointer-events:none">${res.away}</span>
+        ` : `
+          <span class="sinp" style="display:flex;align-items:center;justify-content:center;color:var(--text3);pointer-events:none">–</span>
+          <span class="ssep">:</span>
+          <span class="sinp" style="display:flex;align-items:center;justify-content:center;color:var(--text3);pointer-events:none">–</span>
         `}
       </div>
       <span class="team r">${renderTeam(getTeamName(m.id,'away'), true)}</span>
@@ -1541,7 +1549,14 @@ function matchCardHTML(m, showPred) {
     <div class="mfoot">
       ${showPred
         ? `<span class="mlbl">${isOwn ? t('yourPred') : t('prediction')}</span>${hasPred?`<span class="msaved">${t('saved')}</span>`:''}${ptsH}`
-        : `${hasRes ? `<span class="msaved">✓ ${res.home}–${res.away} ${t('saved')}</span>` : `<span class="mlbl">${t('noResult')}</span>`}`
+        : `${isAdmin
+          ? (hasRes ? `<span class="msaved">✓ ${res.home}–${res.away} ${t('saved')}</span>` : `<span class="mlbl">${t('noResult')}</span>`)
+          : (hasRes ? `<span class="msaved">✓ Resultado oficial</span>` : `<span class="mlbl">⏳ Pendiente</span>`)
+        }
+        ${isAdmin ? `
+          ${hasRes ? `<button class="btn btn-sm" style="font-size:11px;color:var(--danger);border-color:var(--danger)" onclick="deleteResult(${m.id})">🗑️ Borrar</button>` : ''}
+          <button class="btn btn-sm ${(S.locks&&S.locks[m.id])?'btn-r':'btn-g'}" style="margin-left:auto;font-size:11px" onclick="toggleLock(${m.id})">${(S.locks&&S.locks[m.id])?'🔓 Desbloquear':'🔒 Bloquear'}</button>
+        ` : ''}`
       }
     </div>
   </div>`;
@@ -1601,7 +1616,20 @@ function toggleLock(matchId) {
   else { if (!S.locks) S.locks={}; if (!current) S.locks[matchId]=true; else delete S.locks[matchId]; localSave(); renderResultList(); renderMatchList(); }
 }
 
+function deleteResult(id) {
+  if (!isAdmin) return;
+  if (!confirm('¿Borrar el resultado del partido #' + id + '?')) return;
+  if (DB) {
+    DB.ref(`${DB_PATH}/results/${id}`).remove();
+  } else {
+    delete S.results[id];
+    localSave();
+    renderResultList();
+  }
+}
+
 function saveResult(id) {
+  if (!isAdmin) return; // Solo admin puede guardar resultados
   const h = document.getElementById('rh' + id)?.value;
   const a = document.getElementById('ra' + id)?.value;
   if (h === '' || a === '') return;
