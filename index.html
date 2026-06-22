@@ -209,6 +209,17 @@ select option{background:white;}
 .phase-btn:hover{border-color:var(--accent);color:var(--accent);}
 .phase-btn.active{background:var(--accent);color:white;border-color:var(--accent);}
 
+/* ── COMPLETED BAR (filtro partidos cerrados) ── */
+.completed-bar{background:rgba(100,100,120,0.04);border:1.5px dashed var(--border2);border-radius:var(--r);padding:11px 16px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:13px;color:var(--text2);font-weight:600;transition:all .15s;user-select:none;}
+.completed-bar:hover{background:rgba(0,61,165,0.05);border-color:var(--accent);color:var(--accent);}
+.completed-bar.expanded{border-style:solid;border-color:var(--border2);background:rgba(0,61,165,0.03);}
+.completed-bar-left{display:flex;align-items:center;gap:8px;}
+.completed-bar-pts{font-size:11px;font-weight:700;background:rgba(0,61,165,0.09);color:var(--accent);padding:2px 9px;border-radius:10px;}
+.completed-bar-btn{font-size:11px;color:var(--accent);font-weight:700;background:rgba(0,61,165,0.08);padding:3px 10px;border-radius:6px;white-space:nowrap;}
+.filter-toggle{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;border:1.5px solid var(--border2);background:white;color:var(--text2);cursor:pointer;transition:all .15s;margin-left:auto;}
+.filter-toggle:hover{border-color:var(--accent);color:var(--accent);}
+.filter-toggle.active{background:rgba(0,61,165,0.08);border-color:var(--accent);color:var(--accent);}
+
 /* ── PLAYER BAR ── */
 .pbar{background:white;border:1px solid var(--border2);border-radius:var(--r);padding:12px 16px;margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 2px 6px rgba(0,61,165,0.04);}
 .pbar label{font-size:12px;color:var(--text2);white-space:nowrap;font-weight:600;}
@@ -1429,10 +1440,14 @@ function renderGroups() {
 
 /* ─── PREDICCIONES ─── */
 function renderPartidos() {
-  // Phase tabs
-  document.getElementById('phaseTabs').innerHTML = PHASES.map(p =>
-    `<button class="phase-btn${p===S.activePhase?' active':''}" onclick="setPhase('${p}')">${p}</button>`
-  ).join('');
+  // Phase tabs + toggle filtro
+  document.getElementById('phaseTabs').innerHTML =
+    PHASES.map(p =>
+      `<button class="phase-btn${p===S.activePhase?' active':''}" onclick="setPhase('${p}')">${p}</button>`
+    ).join('') +
+    `<button id="filterToggleBtn" class="filter-toggle${hideCompleted?' active':''}" onclick="toggleHideCompleted()">
+      🔒 ${hideCompleted ? 'Cerrados ocultos' : 'Ver todos'}
+    </button>`;
 
   if (isAdmin) {
     // Admin: show player select
@@ -1466,13 +1481,73 @@ function onPlayerChange() {
 function renderMatchList() {
   const list = document.getElementById('matchesList');
   const savedScroll = window.scrollY;
-  const matches = MATCHES.filter(m => m.phase === S.activePhase)
+  const allMatches = MATCHES.filter(m => m.phase === S.activePhase)
     .sort((a, b) => getMatchUTC(a) - getMatchUTC(b));
   if (!S.players.length) { list.innerHTML = `<div class="empty">${t('addFirst')}</div>`; return; }
   if (!S.currentPlayer) { list.innerHTML = `<div class="empty">${t('selectToSee')}</div>`; return; }
   refreshResolvedNames();
-  list.innerHTML = matches.map(m => matchCardHTML(m, true)).join('');
+
+  const pending   = allMatches.filter(m => !isLocked(m));
+  const completed = allMatches.filter(m => isLocked(m));
+  let html = '';
+
+  if (completed.length) {
+    const myPreds = completed.map(m => {
+      const pred = (S.predictions[m.id] || {})[S.currentPlayer];
+      const res  = S.results[m.id];
+      if (!pred || pred.home === undefined) return null;
+      if (!res  || res.home  === undefined) return null;
+      return calcPts(pred, res);
+    }).filter(p => p !== null);
+    const ptsSumDone = myPreds.reduce((a, b) => a + b, 0);
+    const predCount  = myPreds.length;
+
+    if (hideCompleted) {
+      const ptsLabel = predCount
+        ? `<span class="completed-bar-pts">${ptsSumDone} pts en ${predCount} pred.</span>`
+        : '';
+      html += `<div class="completed-bar" onclick="toggleHideCompleted()">
+        <div class="completed-bar-left">
+          🔒 <strong>${completed.length}</strong> partido${completed.length>1?'s':''} cerrado${completed.length>1?'s':''}
+          ${ptsLabel}
+        </div>
+        <span class="completed-bar-btn">Ver ▾</span>
+      </div>`;
+    } else {
+      html += `<div class="completed-bar expanded" onclick="toggleHideCompleted()">
+        <div class="completed-bar-left">
+          🔒 <strong>${completed.length}</strong> partido${completed.length>1?'s':''} cerrado${completed.length>1?'s':''}
+        </div>
+        <span class="completed-bar-btn">Ocultar ▴</span>
+      </div>`;
+      html += completed.map(m => matchCardHTML(m, true)).join('');
+    }
+  }
+
+  // Partidos abiertos siempre visibles
+  if (pending.length) {
+    html += pending.map(m => matchCardHTML(m, true)).join('');
+  } else if (!completed.length) {
+    html += `<div class="empty">Sin partidos en esta fase</div>`;
+  } else if (pending.length === 0 && !hideCompleted) {
+    // nada extra que agregar, ya se mostraron arriba
+  } else if (pending.length === 0 && hideCompleted) {
+    html += `<div class="empty" style="font-size:12px;color:var(--text3)">Todos los partidos de esta fase ya cerraron 🔒</div>`;
+  }
+
+  list.innerHTML = html;
   requestAnimationFrame(() => window.scrollTo(0, savedScroll));
+}
+
+function toggleHideCompleted() {
+  hideCompleted = !hideCompleted;
+  // Actualizar ícono del toggle si existe
+  const btn = document.getElementById('filterToggleBtn');
+  if (btn) {
+    btn.classList.toggle('active', hideCompleted);
+    btn.textContent = hideCompleted ? '🔒 Ocultar cerrados' : '👁 Mostrar todos';
+  }
+  renderMatchList();
 }
 
 // Renderiza nombre de equipo con bandera si aplica, o placeholder en gris
@@ -1583,10 +1658,16 @@ function savePred(id) {
 
 /* ─── RESULTADOS ─── */
 let resPhase = 'Grupos';
+let hideCompleted = true;   // predicciones: ocultar partidos cerrados
+let hideCompletedRes = true; // resultados: ocultar partidos con resultado
 function renderResultados() {
-  document.getElementById('resPhTabs').innerHTML = PHASES.map(p =>
-    `<button class="phase-btn${p===resPhase?' active':''}" onclick="setResPhase('${p}')">${p}</button>`
-  ).join('');
+  document.getElementById('resPhTabs').innerHTML =
+    PHASES.map(p =>
+      `<button class="phase-btn${p===resPhase?' active':''}" onclick="setResPhase('${p}')">${p}</button>`
+    ).join('') +
+    `<button id="resFilterToggleBtn" class="filter-toggle${hideCompletedRes?' active':''}" onclick="toggleHideCompletedRes()">
+      ✅ ${hideCompletedRes ? 'Con resultado ocultos' : 'Ver todos'}
+    </button>`;
   renderResultList();
 }
 function setResPhase(ph) { resPhase = ph; renderResultados(); }
@@ -1594,8 +1675,12 @@ function setResPhase(ph) { resPhase = ph; renderResultados(); }
 function renderResultList() {
   refreshResolvedNames();
   const list = document.getElementById('resultsList');
-  const matches = MATCHES.filter(m => m.phase === resPhase)
+  const allMatches = MATCHES.filter(m => m.phase === resPhase)
     .sort((a, b) => getMatchUTC(a) - getMatchUTC(b));
+
+  const withResult    = allMatches.filter(m => { const r = S.results[m.id]; return r && r.home !== undefined && r.away !== undefined; });
+  const withoutResult = allMatches.filter(m => { const r = S.results[m.id]; return !r || r.home === undefined; });
+
   const champ = resPhase === 'Final' ? `
     <div class="card" style="border-left:4px solid var(--wc-gold);">
       <div class="card-title" style="color:var(--gold)">${t('champTitle')}</div>
@@ -1606,7 +1691,44 @@ function renderResultList() {
       </div>
       ${S.champion ? `<div style="margin-top:10px;font-size:14px;color:var(--gold)">${t('champion')} <strong>${S.champion}</strong></div>` : ''}
     </div>` : '';
-  list.innerHTML = champ + matches.map(m => matchCardHTML(m, false)).join('');
+
+  let html = champ;
+
+  if (withResult.length) {
+    if (hideCompletedRes) {
+      html += `<div class="completed-bar" onclick="toggleHideCompletedRes()">
+        <div class="completed-bar-left">
+          ✅ <strong>${withResult.length}</strong> partido${withResult.length>1?'s':''} con resultado ingresado
+        </div>
+        <span class="completed-bar-btn">Ver ▾</span>
+      </div>`;
+    } else {
+      html += `<div class="completed-bar expanded" onclick="toggleHideCompletedRes()">
+        <div class="completed-bar-left">
+          ✅ <strong>${withResult.length}</strong> partido${withResult.length>1?'s':''} con resultado
+        </div>
+        <span class="completed-bar-btn">Ocultar ▴</span>
+      </div>`;
+      html += withResult.map(m => matchCardHTML(m, false)).join('');
+    }
+  }
+
+  html += withoutResult.map(m => matchCardHTML(m, false)).join('');
+  if (!withoutResult.length && !withResult.length) {
+    html += `<div class="empty">Sin partidos en esta fase</div>`;
+  }
+
+  list.innerHTML = html;
+}
+
+function toggleHideCompletedRes() {
+  hideCompletedRes = !hideCompletedRes;
+  const btn = document.getElementById('resFilterToggleBtn');
+  if (btn) {
+    btn.classList.toggle('active', hideCompletedRes);
+    btn.textContent = hideCompletedRes ? '✅ Con resultado ocultos' : '👁 Ver todos';
+  }
+  renderResultList();
 }
 
 function toggleLock(matchId) {
