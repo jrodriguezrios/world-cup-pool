@@ -497,6 +497,20 @@ select option{background:white;}
         </div>
         <div id="autoUpdateLog" style="margin-top:8px;font-size:12px;color:var(--text2);display:none;background:var(--bg3);border-radius:8px;padding:10px;max-height:120px;overflow-y:auto;"></div>
       </div>
+      <!-- ══ CARGA OFICIAL DE RESULTADOS ══ -->
+      <div class="card" style="border-left:4px solid var(--wc-gold);background:linear-gradient(135deg,rgba(200,168,75,0.05),rgba(0,61,165,0.03));">
+        <div class="card-title" style="color:var(--gold)">⚽ Resultados Oficiales — Fase de Grupos</div>
+        <div class="card-sub" style="margin-bottom:12px">Carga todos los <strong>72 resultados</strong> reales de la Fase de Grupos (11–27 Jun 2026) con un solo clic. Se sincronizan para todos los participantes.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-gold" onclick="loadOfficialResults()" style="font-size:14px;padding:10px 20px;">
+            📥 Cargar 72 resultados oficiales
+          </button>
+          <span id="officialLoadStatus" style="font-size:12px;color:var(--text3)"></span>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text3);line-height:1.6;">
+          Fuente: FIFA · ESPN · UEFA · Actualizado 29 Jun 2026
+        </div>
+      </div>
       <div class="card" style="border-left:4px solid var(--wc-red);">
         <div class="card-title" style="color:var(--wc-red)" data-i18n="resultsTitle">📋 Official results</div>
         <div class="card-sub" data-i18n="resultsDesc">Auto results appear here. You can also manually enter or correct scores.</div>
@@ -776,6 +790,98 @@ const FIREBASE_CONFIG = {
 };
 // ▲▲▲ Si los dejas vacíos, funciona en modo local (datos solo en tu navegador) ▲▲▲
 
+/* ─── RESULTADOS OFICIALES FASE DE GRUPOS ───────────────────────
+   Actualizado: 29 Jun 2026 · Fuente: FIFA / ESPN / UEFA
+   ─────────────────────────────────────────────────────────────── */
+const OFFICIAL_RESULTS = {
+  /* GRUPO A */
+  1:{home:2,away:0},  // México 2-0 Sudáfrica
+  2:{home:2,away:1},  // Corea del Sur 2-1 Rep. Checa
+  3:{home:1,away:1},  // Rep. Checa 1-1 Sudáfrica
+  4:{home:1,away:0},  // México 1-0 Corea del Sur
+  5:{home:0,away:3},  // Rep. Checa 0-3 México
+  6:{home:1,away:0},  // Sudáfrica 1-0 Corea del Sur
+  /* GRUPO B */
+  7:{home:1,away:1},  // Canadá 1-1 Bosnia y Herz.
+  8:{home:1,away:1},  // Qatar 1-1 Suiza
+  9:{home:4,away:1},  // Suiza 4-1 Bosnia y Herz.
+  10:{home:6,away:0}, // Canadá 6-0 Qatar
+  11:{home:2,away:1}, // Suiza 2-1 Canadá
+  12:{home:3,away:1}, // Bosnia y Herz. 3-1 Qatar
+  /* GRUPO C */
+  13:{home:1,away:1}, // Brasil 1-1 Marruecos
+  14:{home:0,away:1}, // Haití 0-1 Escocia
+  15:{home:0,away:1}, // Escocia 0-1 Marruecos
+  16:{home:3,away:0}, // Brasil 3-0 Haití
+  17:{home:0,away:3}, // Escocia 0-3 Brasil
+  18:{home:4,away:2}, // Marruecos 4-2 Haití
+  /* GRUPO D */
+  19:{home:4,away:1}, // USA 4-1 Paraguay
+  20:{home:2,away:0}, // Australia 2-0 Turquía
+  21:{home:2,away:0}, // USA 2-0 Australia
+  22:{home:0,away:1}, // Turquía 0-1 Paraguay
+  23:{home:3,away:2}, // Turquía 3-2 USA
+  24:{home:0,away:0}, // Paraguay 0-0 Australia
+  /* GRUPO E */
+  25:{home:7,away:1}, // Alemania 7-1 Curazao
+  26:{home:1,away:0}, // Costa de Marfil 1-0 Ecuador
+  27:{home:2,away:1}, // Alemania 2-1 Costa de Marfil
+  28:{home:0,away:0}, // Ecuador 0-0 Curazao
+  29:{home:2,away:1}, // Ecuador 2-1 Alemania
+  30:{home:0,away:2}, // Curazao 0-2 Costa de Marfil
+  /* GRUPO F */
+  31:{home:2,away:2}, // Países Bajos 2-2 Japón
+  32:{home:5,away:1}, // Suecia 5-1 Túnez
+  33:{home:5,away:1}, // Países Bajos 5-1 Suecia
+  34:{home:0,away:4}, // Túnez 0-4 Japón
+  35:{home:1,away:1}, // Japón 1-1 Suecia
+  36:{home:1,away:3}, // Túnez 1-3 Países Bajos
+  /* GRUPO G */
+  37:{home:1,away:1}, // Bélgica 1-1 Egipto
+  38:{home:2,away:2}, // Irán 2-2 Nueva Zelanda
+  39:{home:0,away:0}, // Bélgica 0-0 Irán
+  40:{home:1,away:3}, // Nueva Zelanda 1-3 Egipto
+  41:{home:1,away:1}, // Egipto 1-1 Irán
+  42:{home:1,away:5}, // Nueva Zelanda 1-5 Bélgica
+  /* GRUPO H */
+  43:{home:0,away:0}, // España 0-0 Cabo Verde
+  44:{home:1,away:1}, // Arabia Saudita 1-1 Uruguay
+  45:{home:4,away:0}, // España 4-0 Arabia Saudita
+  46:{home:2,away:2}, // Uruguay 2-2 Cabo Verde
+  47:{home:0,away:1}, // Uruguay 0-1 España
+  48:{home:0,away:0}, // Cabo Verde 0-0 Arabia Saudita
+  /* GRUPO I */
+  49:{home:3,away:1}, // Francia 3-1 Senegal
+  50:{home:1,away:4}, // Irak 1-4 Noruega
+  51:{home:3,away:0}, // Francia 3-0 Irak
+  52:{home:3,away:2}, // Noruega 3-2 Senegal
+  53:{home:1,away:4}, // Noruega 1-4 Francia
+  54:{home:5,away:0}, // Senegal 5-0 Irak
+  /* GRUPO J */
+  55:{home:3,away:0}, // Argentina 3-0 Argelia
+  56:{home:3,away:1}, // Austria 3-1 Jordania
+  57:{home:2,away:0}, // Argentina 2-0 Austria
+  58:{home:1,away:2}, // Jordania 1-2 Argelia
+  59:{home:3,away:3}, // Argelia 3-3 Austria
+  60:{home:1,away:3}, // Jordania 1-3 Argentina
+  /* GRUPO K */
+  61:{home:1,away:1}, // Portugal 1-1 R.D. del Congo
+  62:{home:1,away:3}, // Uzbekistán 1-3 Colombia
+  63:{home:5,away:0}, // Portugal 5-0 Uzbekistán
+  64:{home:1,away:0}, // Colombia 1-0 R.D. del Congo
+  65:{home:0,away:0}, // Colombia 0-0 Portugal
+  66:{home:3,away:1}, // R.D. del Congo 3-1 Uzbekistán
+  /* GRUPO L */
+  67:{home:4,away:2}, // Inglaterra 4-2 Croacia
+  68:{home:1,away:0}, // Ghana 1-0 Panamá
+  69:{home:0,away:0}, // Inglaterra 0-0 Ghana
+  70:{home:0,away:1}, // Panamá 0-1 Croacia
+  71:{home:0,away:2}, // Panamá 0-2 Inglaterra
+  72:{home:2,away:1}, // Croacia 2-1 Ghana
+  /* DIECISEISAVOS (R32) — partido ya jugado */
+  73:{home:0,away:1}, // Sudáfrica 0-1 Canadá ✅ Dom 28 Jun
+};
+
 let isAdmin = false;
 
 /* ─── TIMEZONE MAP (UTC offset en verano 2026) ─── */
@@ -942,45 +1048,48 @@ const MATCHES = [
   {id:66,group:'K',phase:'Grupos',home:'R.D. del Congo',away:'Uzbekistán',date:'Sáb 27 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'19:30',tz:'Atlanta'},
   {id:59,group:'J',phase:'Grupos',home:'Argelia',away:'Austria',date:'Sáb 27 Jun',venue:'Arrowhead Stadium, Kansas City',time:'21:00',tz:'KC'},
   {id:60,group:'J',phase:'Grupos',home:'Jordania',away:'Argentina',date:'Sáb 27 Jun',venue:'AT&T Stadium, Dallas',time:'21:00',tz:'Dallas'},
-  // ── RONDA DE 32 ──
-  {id:73,group:'Oct',phase:'Octavos',home:'2° Grupo A',away:'2° Grupo B',date:'Dom 28 Jun',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
-  {id:74,group:'Oct',phase:'Octavos',home:'1° Grupo E',away:'3° Mejor',date:'Lun 29 Jun',venue:'Gillette Stadium, Boston',time:'16:30',tz:'Boston'},
-  {id:75,group:'Oct',phase:'Octavos',home:'1° Grupo C',away:'2° Grupo F',date:'Lun 29 Jun',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
-  {id:76,group:'Oct',phase:'Octavos',home:'1° Grupo F',away:'2° Grupo C',date:'Lun 29 Jun',venue:'Estadio BBVA, Monterrey',time:'21:00',tz:'MTY'},
-  {id:77,group:'Oct',phase:'Octavos',home:'2° Grupo E',away:'2° Grupo I',date:'Mar 30 Jun',venue:'AT&T Stadium, Dallas',time:'13:00',tz:'Dallas'},
-  {id:78,group:'Oct',phase:'Octavos',home:'1° Grupo I',away:'3° Mejor',date:'Mar 30 Jun',venue:'MetLife Stadium, NJ',time:'17:00',tz:'NYC'},
-  {id:79,group:'Oct',phase:'Octavos',home:'1° Grupo A',away:'3° Mejor',date:'Mar 30 Jun',venue:'Estadio Azteca, CDMX',time:'21:00',tz:'CDMX'},
-  {id:80,group:'Oct',phase:'Octavos',home:'1° Grupo L',away:'3° Mejor',date:'Mié 1 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
-  {id:81,group:'Oct',phase:'Octavos',home:'1° Grupo D',away:'3° Mejor',date:'Mié 1 Jul',venue:"Levi's Stadium, San Francisco",time:'20:00',tz:'SF'},
-  {id:82,group:'Oct',phase:'Octavos',home:'1° Grupo G',away:'3° Mejor',date:'Mié 1 Jul',venue:'Lumen Field, Seattle',time:'16:00',tz:'Seattle'},
-  {id:83,group:'Oct',phase:'Octavos',home:'1° Grupo H',away:'2° Grupo J',date:'Jue 2 Jul',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
-  {id:84,group:'Oct',phase:'Octavos',home:'2° Grupo K',away:'2° Grupo L',date:'Jue 2 Jul',venue:'BMO Field, Toronto',time:'19:00',tz:'Toronto'},
-  {id:85,group:'Oct',phase:'Octavos',home:'1° Grupo B',away:'3° Mejor',date:'Jue 2 Jul',venue:'BC Place, Vancouver',time:'23:00',tz:'Vancouver'},
-  {id:86,group:'Oct',phase:'Octavos',home:'2° Grupo D',away:'2° Grupo G',date:'Vie 3 Jul',venue:'AT&T Stadium, Dallas',time:'14:00',tz:'Dallas'},
-  {id:87,group:'Oct',phase:'Octavos',home:'1° Grupo J',away:'2° Grupo H',date:'Vie 3 Jul',venue:'Hard Rock Stadium, Miami',time:'18:00',tz:'Miami'},
-  {id:88,group:'Oct',phase:'Octavos',home:'1° Grupo K',away:'3° Mejor',date:'Vie 3 Jul',venue:'Arrowhead Stadium, Kansas City',time:'21:30',tz:'KC'},
-  // ── OCTAVOS DE FINAL ──
-  {id:89,group:'R16',phase:'Octavos de Final',home:'Gan. M73',away:'Gan. M74',date:'Sáb 4 Jul',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
-  {id:90,group:'R16',phase:'Octavos de Final',home:'Gan. M75',away:'Gan. M78',date:'Sáb 4 Jul',venue:'Lincoln Financial, Filadelfia',time:'17:00',tz:'Philly'},
-  {id:91,group:'R16',phase:'Octavos de Final',home:'Gan. M76',away:'Gan. M77',date:'Dom 5 Jul',venue:'MetLife Stadium, NJ',time:'16:00',tz:'NYC'},
+  // ═══ RONDA DE 32 (Dieciseisavos de Final) · 28 Jun – 3 Jul ═══
+  // Fuente oficial: bracketmundial2026.com / FIFA · Verificado 29 Jun 2026
+  {id:73,group:'R32',phase:'Dieciseisavos',home:'Sudáfrica',away:'Canadá',date:'Dom 28 Jun',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},      // ✅ 0-1
+  {id:74,group:'R32',phase:'Dieciseisavos',home:'Alemania',away:'Paraguay',date:'Lun 29 Jun',venue:'Gillette Stadium, Boston',time:'16:30',tz:'Boston'},
+  {id:75,group:'R32',phase:'Dieciseisavos',home:'Países Bajos',away:'Marruecos',date:'Lun 29 Jun',venue:'Estadio BBVA, Monterrey',time:'21:00',tz:'MTY'},
+  {id:76,group:'R32',phase:'Dieciseisavos',home:'Brasil',away:'Japón',date:'Lun 29 Jun',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
+  {id:77,group:'R32',phase:'Dieciseisavos',home:'Francia',away:'Suecia',date:'Mar 30 Jun',venue:'MetLife Stadium, NJ',time:'17:00',tz:'NYC'},
+  {id:78,group:'R32',phase:'Dieciseisavos',home:'Costa de Marfil',away:'Noruega',date:'Mar 30 Jun',venue:'AT&T Stadium, Dallas',time:'13:00',tz:'Dallas'},
+  {id:79,group:'R32',phase:'Dieciseisavos',home:'México',away:'Ecuador',date:'Mar 30 Jun',venue:'Estadio Azteca, CDMX',time:'21:00',tz:'CDMX'},
+  {id:80,group:'R32',phase:'Dieciseisavos',home:'Inglaterra',away:'R.D. del Congo',date:'Mié 1 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
+  {id:81,group:'R32',phase:'Dieciseisavos',home:'USA',away:'Bosnia y Herz.',date:'Mié 1 Jul',venue:"Levi's Stadium, San Francisco",time:'20:00',tz:'SF'},
+  {id:82,group:'R32',phase:'Dieciseisavos',home:'Bélgica',away:'Senegal',date:'Mié 1 Jul',venue:'Lumen Field, Seattle',time:'16:00',tz:'Seattle'},
+  {id:83,group:'R32',phase:'Dieciseisavos',home:'Portugal',away:'Croacia',date:'Jue 2 Jul',venue:'BMO Field, Toronto',time:'19:00',tz:'Toronto'},
+  {id:84,group:'R32',phase:'Dieciseisavos',home:'España',away:'Austria',date:'Jue 2 Jul',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
+  {id:85,group:'R32',phase:'Dieciseisavos',home:'Suiza',away:'Argelia',date:'Jue 2 Jul',venue:'BC Place, Vancouver',time:'23:00',tz:'Vancouver'},
+  {id:86,group:'R32',phase:'Dieciseisavos',home:'Argentina',away:'Cabo Verde',date:'Vie 3 Jul',venue:'Hard Rock Stadium, Miami',time:'18:00',tz:'Miami'},
+  {id:87,group:'R32',phase:'Dieciseisavos',home:'Colombia',away:'Ghana',date:'Vie 3 Jul',venue:'Arrowhead Stadium, Kansas City',time:'21:30',tz:'KC'},
+  {id:88,group:'R32',phase:'Dieciseisavos',home:'Australia',away:'Egipto',date:'Vie 3 Jul',venue:'AT&T Stadium, Dallas',time:'14:00',tz:'Dallas'},
+  // ═══ OCTAVOS DE FINAL (Ronda de 16) · 4–7 Jul ═══
+  {id:89,group:'R16',phase:'Octavos de Final',home:'Gan. M74',away:'Gan. M77',date:'Sáb 4 Jul',venue:'Lincoln Financial, Filadelfia',time:'17:00',tz:'Philly'},
+  {id:90,group:'R16',phase:'Octavos de Final',home:'Gan. M73',away:'Gan. M75',date:'Sáb 4 Jul',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
+  {id:91,group:'R16',phase:'Octavos de Final',home:'Gan. M76',away:'Gan. M78',date:'Dom 5 Jul',venue:'MetLife Stadium, NJ',time:'16:00',tz:'NYC'},
   {id:92,group:'R16',phase:'Octavos de Final',home:'Gan. M79',away:'Gan. M80',date:'Dom 5 Jul',venue:'Estadio Azteca, CDMX',time:'20:00',tz:'CDMX'},
-  {id:93,group:'R16',phase:'Octavos de Final',home:'Gan. M81',away:'Gan. M82',date:'Lun 6 Jul',venue:'AT&T Stadium, Dallas',time:'15:00',tz:'Dallas'},
-  {id:94,group:'R16',phase:'Octavos de Final',home:'Gan. M83',away:'Gan. M84',date:'Lun 6 Jul',venue:'Lumen Field, Seattle',time:'20:00',tz:'Seattle'},
-  {id:95,group:'R16',phase:'Octavos de Final',home:'Gan. M85',away:'Gan. M86',date:'Mar 7 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
-  {id:96,group:'R16',phase:'Octavos de Final',home:'Gan. M87',away:'Gan. M88',date:'Mar 7 Jul',venue:'BC Place, Vancouver',time:'16:00',tz:'Vancouver'},
-  // ── CUARTOS DE FINAL ──
-  {id:97,group:'CF',phase:'Cuartos de Final',home:'QF1',away:'QF2',date:'Jue 9 Jul',venue:'Gillette Stadium, Boston',time:'16:00',tz:'Boston'},
-  {id:98,group:'CF',phase:'Cuartos de Final',home:'QF3',away:'QF4',date:'Vie 10 Jul',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
-  {id:99,group:'CF',phase:'Cuartos de Final',home:'QF5',away:'QF6',date:'Sáb 11 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
-  {id:100,group:'CF',phase:'Cuartos de Final',home:'QF7',away:'QF8',date:'Sáb 11 Jul',venue:'Arrowhead Stadium, Kansas City',time:'21:00',tz:'KC'},
-  // ── SEMIFINALES ──
-  {id:101,group:'SF',phase:'Semifinales',home:'SF1',away:'SF2',date:'Mar 14 Jul',venue:'AT&T Stadium, Dallas',time:'15:00',tz:'Dallas'},
-  {id:102,group:'SF',phase:'Semifinales',home:'SF3',away:'SF4',date:'Mié 15 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'15:00',tz:'Atlanta'},
-  // ── FINAL ──
-  {id:103,group:'3P',phase:'Tercer puesto',home:'Perdedor SF1',away:'Perdedor SF2',date:'Sáb 18 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
-  {id:104,group:'FIN',phase:'Final',home:'Ganador SF1',away:'Ganador SF2',date:'Dom 19 Jul',venue:'MetLife Stadium, Nueva York/NJ',time:'15:00',tz:'NYC'},
+  {id:93,group:'R16',phase:'Octavos de Final',home:'Gan. M83',away:'Gan. M84',date:'Lun 6 Jul',venue:'AT&T Stadium, Dallas',time:'15:00',tz:'Dallas'},
+  {id:94,group:'R16',phase:'Octavos de Final',home:'Gan. M81',away:'Gan. M82',date:'Lun 6 Jul',venue:'Lumen Field, Seattle',time:'20:00',tz:'Seattle'},
+  {id:95,group:'R16',phase:'Octavos de Final',home:'Gan. M86',away:'Gan. M88',date:'Mar 7 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
+  {id:96,group:'R16',phase:'Octavos de Final',home:'Gan. M85',away:'Gan. M87',date:'Mar 7 Jul',venue:'BC Place, Vancouver',time:'16:00',tz:'Vancouver'},
+  // ═══ CUARTOS DE FINAL · 9–11 Jul ═══
+  {id:97,group:'CF',phase:'Cuartos de Final',home:'Gan. M89',away:'Gan. M90',date:'Jue 9 Jul',venue:'Gillette Stadium, Boston',time:'16:00',tz:'Boston'},
+  {id:98,group:'CF',phase:'Cuartos de Final',home:'Gan. M93',away:'Gan. M94',date:'Vie 10 Jul',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
+  {id:99,group:'CF',phase:'Cuartos de Final',home:'Gan. M91',away:'Gan. M92',date:'Sáb 11 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
+  {id:100,group:'CF',phase:'Cuartos de Final',home:'Gan. M95',away:'Gan. M96',date:'Sáb 11 Jul',venue:'Arrowhead Stadium, Kansas City',time:'21:00',tz:'KC'},
+  // ═══ SEMIFINALES · 14–15 Jul ═══
+  {id:101,group:'SF',phase:'Semifinales',home:'Gan. M97',away:'Gan. M98',date:'Lun 14 Jul',venue:'AT&T Stadium, Dallas',time:'15:00',tz:'Dallas'},
+  {id:102,group:'SF',phase:'Semifinales',home:'Gan. M99',away:'Gan. M100',date:'Mar 15 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'15:00',tz:'Atlanta'},
+  // ═══ TERCER PUESTO y FINAL ═══
+  {id:103,group:'3P',phase:'Tercer puesto',home:'Perd. M101',away:'Perd. M102',date:'Sáb 18 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
+  {id:104,group:'FIN',phase:'Final',home:'Gan. M101',away:'Gan. M102',date:'Dom 19 Jul',venue:'MetLife Stadium, Nueva York/NJ',time:'15:00',tz:'NYC'},
 ];
-const PHASES = ['Grupos','Octavos','Octavos de Final','Cuartos de Final','Semifinales','Tercer puesto','Final'];
+const PHASES = ['Grupos','Dieciseisavos','Octavos de Final','Cuartos de Final','Semifinales','Tercer puesto','Final'];
+// Alias para compatibilidad: los partidos usan phase:'Octavos' → renderizado como 'Dieciseisavos'
+const PHASE_ALIAS = {'Octavos':'Dieciseisavos'};
 const AVC = [
   {bg:'#003DA5',tx:'#fff'},{bg:'#D52B1E',tx:'#fff'},{bg:'#C8A84B',tx:'#fff'},
   {bg:'#059669',tx:'#fff'},{bg:'#7C3AED',tx:'#fff'},{bg:'#0891B2',tx:'#fff'},
@@ -1109,9 +1218,12 @@ function localSave() { try { localStorage.setItem('polla2026v5', JSON.stringify(
 function localLoad() {
   const d = JSON.parse(localStorage.getItem('polla2026v5') || '{}');
   S.players = d.players || [];
-  S.results = d.results || {};
+  // Pre-seed with official results if no results stored yet
+  S.results = (d.results && Object.keys(d.results).length > 0) ? d.results : {...OFFICIAL_RESULTS};
   S.predictions = d.predictions || {};
-  S.activePhase = d.activePhase || 'Grupos';
+  // Migrate old 'Octavos' phase to 'Dieciseisavos'
+  const ph = d.activePhase || 'Dieciseisavos';
+  S.activePhase = ph === 'Octavos' ? 'Dieciseisavos' : ph;
   S.champion = d.champion || null;
 }
 
@@ -1123,7 +1235,8 @@ function attachListeners() {
     S.results = d.results || {};
     S.predictions = d.predictions || {};
     S.champion = d.champion || null;
-    S.activePhase = d.activePhase || 'Grupos';
+    const ph = d.activePhase || 'Dieciseisavos';
+    S.activePhase = ph === 'Octavos' ? 'Dieciseisavos' : ph;
     S.locks = d.locks || {};
     renderPlayers();
     refreshResolvedNames();
@@ -1766,6 +1879,48 @@ function saveChampion() {
   if (!v) return;
   if (DB) DB.ref(`${DB_PATH}/champion`).set(v);
   else { S.champion = v; localSave(); renderResultados(); }
+}
+
+/* ─── CARGA DE RESULTADOS OFICIALES ─── */
+async function loadOfficialResults() {
+  if (!isAdmin) return;
+  const status = document.getElementById('officialLoadStatus');
+  const btn = document.querySelector('button[onclick="loadOfficialResults()"]');
+  const total = Object.keys(OFFICIAL_RESULTS).length;
+
+  if (!confirm(`¿Cargar los ${total} resultados oficiales de la Fase de Grupos? Esto sobrescribirá los resultados existentes de la fase de grupos.`)) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Cargando...'; }
+  if (status) status.textContent = 'Sincronizando...';
+
+  try {
+    if (DB) {
+      // Batch write to Firebase
+      const updates = {};
+      Object.entries(OFFICIAL_RESULTS).forEach(([id, val]) => {
+        updates[`${DB_PATH}/results/${id}`] = val;
+      });
+      await firebase.database(firebase.app('polla')).ref().update(updates);
+      if (status) status.textContent = `✅ ${total} resultados cargados en Firebase`;
+    } else {
+      // Local mode
+      Object.entries(OFFICIAL_RESULTS).forEach(([id, val]) => {
+        S.results[parseInt(id)] = val;
+      });
+      localSave();
+      renderResultados();
+      calcScores();
+      if (status) status.textContent = `✅ ${total} resultados cargados localmente`;
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Resultados cargados'; btn.style.background='var(--success)'; }
+    setTimeout(() => {
+      if (btn) { btn.textContent = '📥 Cargar 72 resultados oficiales'; btn.style.background=''; btn.disabled = false; }
+      if (status) status.textContent = '';
+    }, 4000);
+  } catch(e) {
+    if (status) status.textContent = '❌ Error: ' + e.message;
+    if (btn) { btn.disabled = false; btn.textContent = '📥 Cargar 72 resultados oficiales'; }
+  }
 }
 
 /* ═══════════════════════════════════════════
