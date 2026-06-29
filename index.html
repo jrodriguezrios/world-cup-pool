@@ -1741,6 +1741,24 @@ function matchCardHTML(m, showPred) {
           ? (hasRes ? `<span class="msaved">✓ ${res.home}–${res.away} ${t('saved')}</span>` : `<span class="mlbl">${t('noResult')}</span>`)
           : (hasRes ? `<span class="msaved">✓ Resultado oficial</span>` : `<span class="mlbl">⏳ Pendiente</span>`)
         }
+        ${isAdmin && m.id > 72 ? (() => {
+          // Selector de ganador por penales para fase eliminatoria
+          const isDraw = hasRes && res.home === res.away;
+          const hasWinner = res.winner === 'home' || res.winner === 'away';
+          const hLabel = getTeamName(m.id,'home');
+          const aLabel = getTeamName(m.id,'away');
+          return `<div id="rw-wrap-${m.id}" style="display:${isDraw?'flex':'none'};align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);width:100%">
+            <span style="font-size:11px;font-weight:700;color:var(--danger)">🥅 Empate — ganador por penales:</span>
+            <select id="rw${m.id}" onchange="saveWinner(${m.id})" style="font-size:12px;padding:5px 10px;border-radius:8px;border:1.5px solid ${hasWinner?'var(--success)':'var(--danger)'};background:var(--bg3);color:var(--text)">
+              <option value="" ${!hasWinner?'selected':''}>— Sin definir —</option>
+              <option value="home" ${res.winner==='home'?'selected':''}>${hLabel}</option>
+              <option value="away" ${res.winner==='away'?'selected':''}>${aLabel}</option>
+            </select>
+            <span id="rw-badge-${m.id}" style="font-size:11px;font-weight:600;color:${hasWinner?'var(--success)':'var(--danger)'}">
+              ${hasWinner ? '✓ Gana: '+(res.winner==='home'?hLabel:aLabel) : '⚠ Sin definir — bracket bloqueado'}
+            </span>
+          </div>`;
+        })() : ''}
         ${isAdmin ? `
           ${hasRes ? `<button class="btn btn-sm" style="font-size:11px;color:var(--danger);border-color:var(--danger)" onclick="deleteResult(${m.id})">🗑️ Borrar</button>` : ''}
           <button class="btn btn-sm ${(S.locks&&S.locks[m.id])?'btn-r':'btn-g'}" style="margin-left:auto;font-size:11px" onclick="toggleLock(${m.id})">${(S.locks&&S.locks[m.id])?'🔓 Desbloquear':'🔒 Bloquear'}</button>
@@ -1864,14 +1882,61 @@ function deleteResult(id) {
 }
 
 function saveResult(id) {
-  if (!isAdmin) return; // Solo admin puede guardar resultados
+  if (!isAdmin) return;
   const h = document.getElementById('rh' + id)?.value;
   const a = document.getElementById('ra' + id)?.value;
   if (h === '' || a === '') return;
-  const val = {home: parseInt(h), away: parseInt(a)};
+  const hv = parseInt(h), av = parseInt(a);
+  const val = {home: hv, away: av};
+  // Para eliminatorias: preservar el winner existente si el marcador sigue empatado
+  if (id > 72) {
+    const existing = S.results[id] || {};
+    if (hv === av && existing.winner) val.winner = existing.winner;
+    // Si ya no hay empate, limpiar el winner
+    // (si es distinto, no se guarda y Firebase/local no tiene winner)
+  }
   if (DB) DB.ref(`${DB_PATH}/results/${id}`).set(val);
   else { S.results[id] = val; localSave(); }
   ['rh', 'ra'].forEach(pre => { const el = document.getElementById(pre + id); if (el) el.style.borderColor = 'var(--wc-blue)'; });
+  // Si hay empate, mostrar el selector de ganador
+  if (id > 72 && hv === av) {
+    const wrapEl = document.getElementById('rw-wrap-' + id);
+    if (wrapEl) { wrapEl.style.display = 'flex'; }
+  } else {
+    const wrapEl = document.getElementById('rw-wrap-' + id);
+    if (wrapEl) { wrapEl.style.display = 'none'; }
+  }
+}
+
+function saveWinner(id) {
+  if (!isAdmin) return;
+  const sel = document.getElementById('rw' + id);
+  if (!sel) return;
+  const w = sel.value; // 'home' | 'away' | ''
+  const existing = S.results[id];
+  if (!existing || existing.home === undefined) return;
+  const val = {...existing};
+  if (w) val.winner = w; else delete val.winner;
+  if (DB) DB.ref(`${DB_PATH}/results/${id}`).set(val);
+  else { S.results[id] = val; localSave(); refreshResolvedNames(); }
+  // Feedback visual
+  const sel2 = document.getElementById('rw' + id);
+  if (sel2) sel2.style.borderColor = w ? 'var(--success)' : '';
+  const badge = document.getElementById('rw-badge-' + id);
+  if (badge) {
+    if (w) {
+      const nm = RESOLVED_NAMES[id] || {};
+      const match = MATCHES.find(m => m.id === id);
+      const label = w === 'home'
+        ? (nm.home || match?.home)
+        : (nm.away || match?.away);
+      badge.textContent = '✓ Gana: ' + label;
+      badge.style.color = 'var(--success)';
+    } else {
+      badge.textContent = '⚠ Sin definir';
+      badge.style.color = 'var(--danger)';
+    }
+  }
 }
 
 function saveChampion() {
@@ -2084,7 +2149,10 @@ function resolveKnockoutNames() {
     if (!res || res.home === undefined) return null;
     if (res.home > res.away) return hName;
     if (res.away > res.home) return aName;
-    return null; // empate en eliminatoria → pendiente (se resuelve por penales; admin ingresa)
+    // Empate en 90' → ganador por penales (admin lo define)
+    if (res.winner === 'home') return hName;
+    if (res.winner === 'away') return aName;
+    return null; // empate sin definir → bracket pendiente
   }
 
   function loserOf(mid) {
@@ -2096,6 +2164,9 @@ function resolveKnockoutNames() {
     if (!res || res.home === undefined) return null;
     if (res.home > res.away) return aName;
     if (res.away > res.home) return hName;
+    // Empate en 90' → perdedor por penales
+    if (res.winner === 'home') return aName;
+    if (res.winner === 'away') return hName;
     return null;
   }
 
