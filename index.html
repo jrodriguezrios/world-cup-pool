@@ -437,9 +437,9 @@ select option{background:white;}
       <div class="assign-banner">
         <div class="abt"><strong data-i18n="drawTitle">🎲 Team draw</strong><br><span data-i18n="drawDesc">Each participant gets a random team. If their team wins the World Cup, they get <strong>+10 pts bonus</strong>.</span></div>
         <button class="btn btn-g" onclick="assignTeams()" data-i18n="drawBtn">🎲 Draw teams</button>
-        <button class="btn btn-r btn-sm" onclick="resetTeams()" title="Borra todos los equipos asignados para poder reasignar">🔄 Reset equipos</button>
-        <button class="btn btn-g" onclick="downloadReport()" style="background:#059669;border-color:#059669">📊 Download Report</button>
-        <button class="btn btn-g admin-only" onclick="exportBackupXLSX()" style="background:#7C3AED;border-color:#7C3AED" title="Descargar backup completo en Excel">💾 Backup Excel</button>
+        <button class="btn btn-r btn-sm" onclick="resetTeams()" data-i18n="resetTeamsBtn" data-i18n-title="resetTeamsTitle" title="Borra todos los equipos asignados para poder reasignar">🔄 Reset equipos</button>
+        <button class="btn btn-g" onclick="downloadReport()" style="background:#059669;border-color:#059669" data-i18n="reportModalTitle">📊 Download Report</button>
+        <button class="btn btn-g admin-only" onclick="exportBackupXLSX()" style="background:#7C3AED;border-color:#7C3AED" data-i18n="backupExcelBtn" data-i18n-title="backupExcelTitle" title="Descargar backup completo en Excel">💾 Backup Excel</button>
       </div>
     </div>
     <div class="card">
@@ -676,6 +676,34 @@ const I18N = {
     errCors:'❌ Error:',corsHint:'💡 If CORS fails, results can be entered manually below.',
     updateBtn:'🔄 Update results now',
     penaltiesAdvance:'Advances on penalties',penaltiesPending:'Tied — penalty shootout result pending',
+    advancesLabel:'Advances',penaltyTieLabel:'Tied — penalty shootout winner:',notDefinedOption:'— Not set —',
+    winsLabel:'✓ Wins:',bracketLockedWarning:'⚠ Not set — bracket locked',notDefinedShort:'⚠ Not set',
+    decidedByPenalties:'decided on penalties',decidedByExtraTime:'decided in extra time',
+    teamAlreadyAssigned:'⚠️ {flag} {team} is already assigned to {name}',
+    confirmResetTeams:'⚠️ Clear ALL assigned teams?\nThis lets you re-assign with the new FIFA system.\n\nPredictions and points are NOT deleted.',
+    confirmDeleteResult:'Delete the result for match #{id}?',
+    confirmLoadOfficial:'Load the {total} official Group Stage results? This will overwrite any existing group-stage results.',
+    xlsSheetTabla:'🏆 Leaderboard',xlsSheetPredicciones:'⚽ Predictions',xlsSheetResultados:'📋 Results',
+    xlsSheetParticipantes:'👥 Players',xlsSheetInfo:'ℹ️ Info',
+    xlsColParticipante:'Player',xlsColEmail:'Email',xlsColEquipoSorteado:'Drawn Team',xlsColExactos:'Exact (3pts)',
+    xlsColGanador:'Winner (1pt)',xlsColBonusCampeon:'Champion Bonus',xlsColTotalPts:'Total Pts',
+    xlsColPartidoNum:'Match #',xlsColFase:'Phase',xlsColLocal:'Home',xlsColVisitante:'Away',xlsColJugador:'Player',
+    xlsColPredLocal:'Pred. Home',xlsColPredVisit:'Pred. Away',xlsColResLocal:'Res. Home',xlsColResVisit:'Res. Away',
+    xlsColPuntos:'Points',xlsColGrupo:'Group',xlsColGolesLocal:'Home Goals',xlsColGolesVisit:'Away Goals',
+    xlsColFecha:'Date',xlsColSede:'Venue',xlsColID:'ID',xlsColNombre:'Name',xlsColBandera:'Flag',xlsColTieneFoto:'Has Photo',
+    xlsSinAsignar:'Unassigned',xlsSi:'Yes',xlsNo:'No',
+    xlsBackupGenerado:'Backup generated',xlsCampeonRegistrado:'Registered champion',xlsPendiente:'Pending',
+    xlsTotalParticipantes:'Total players',xlsPartidosConResultado:'Matches with a result',xlsTotalPredicciones:'Total predictions',
+    reportModalTitle:'📊 Download Report',reportModalSub:'Choose your preferred format:',
+    reportOptJpgTitle:'JPG Image',reportOptJpgDesc:'Download as image — perfect for sharing in Slack or WhatsApp.',
+    reportOptPdfTitle:'PDF',reportOptPdfDesc:'Opens print dialog — save as PDF. Best for email or printing.',
+    reportCancel:'Cancel',reportPopupBlocked:'Please allow popups for this site.',
+    reportNoMatches:'No matches today — rest day!',reportTodayMatches:"Today's Matches",
+    reportLockNote:'Predictions lock <strong>10 min before kickoff</strong> — world-cup-pool-nu.vercel.app',
+    reportLeaderboard:'Leaderboard',reportColPlayer:'PLAYER',reportColTeam:'TEAM',reportColExact:'EXACT',
+    reportColWinner:'WINNER',reportColBonus:'BONUS',reportColTotal:'TOTAL',reportDailyLabel:'DAILY REPORT',
+    resetTeamsBtn:'🔄 Reset teams',resetTeamsTitle:'Clears all assigned teams so you can re-draw',
+    backupExcelBtn:'💾 Excel Backup',backupExcelTitle:'Download a full backup as an Excel file',
     pubTitle:'🚀 How to publish the pool online',pubDesc:'So the whole team can access from their own devices with synced data.',
     pubFirebaseResult:'<strong>Result:</strong> A unique link for everyone, predictions and leaderboard synced in real time.',
     pubStep1:'Go to <strong>console.firebase.google.com</strong> → Create project → "Katapult-Polla-2026"',
@@ -741,6 +769,34 @@ const I18N = {
     errCors:'❌ Error:',corsHint:'💡 Si falla el CORS, los resultados se pueden ingresar manualmente abajo.',
     updateBtn:'🔄 Actualizar resultados ahora',
     penaltiesAdvance:'Avanza por penales',penaltiesPending:'Empate — definición por penales pendiente',
+    advancesLabel:'Avanza',penaltyTieLabel:'Empate — ganador por penales:',notDefinedOption:'— Sin definir —',
+    winsLabel:'✓ Gana:',bracketLockedWarning:'⚠ Sin definir — bracket bloqueado',notDefinedShort:'⚠ Sin definir',
+    decidedByPenalties:'definido por penales',decidedByExtraTime:'definido en tiempo extra',
+    teamAlreadyAssigned:'⚠️ {flag} {team} ya está asignado a {name}',
+    confirmResetTeams:'⚠️ ¿Borrar TODOS los equipos asignados?\nEsto permite reasignar con el nuevo sistema FIFA.\n\nLas predicciones y puntos NO se borran.',
+    confirmDeleteResult:'¿Borrar el resultado del partido #{id}?',
+    confirmLoadOfficial:'¿Cargar los {total} resultados oficiales de la Fase de Grupos? Esto sobrescribirá los resultados existentes de la fase de grupos.',
+    xlsSheetTabla:'🏆 Tabla',xlsSheetPredicciones:'⚽ Predicciones',xlsSheetResultados:'📋 Resultados',
+    xlsSheetParticipantes:'👥 Participantes',xlsSheetInfo:'ℹ️ Info',
+    xlsColParticipante:'Participante',xlsColEmail:'Email',xlsColEquipoSorteado:'Equipo Sorteado',xlsColExactos:'Exactos (3pts)',
+    xlsColGanador:'Ganador (1pt)',xlsColBonusCampeon:'Bonus Campeón',xlsColTotalPts:'Total Pts',
+    xlsColPartidoNum:'Partido #',xlsColFase:'Fase',xlsColLocal:'Local',xlsColVisitante:'Visitante',xlsColJugador:'Jugador',
+    xlsColPredLocal:'Pred. Local',xlsColPredVisit:'Pred. Visit.',xlsColResLocal:'Res. Local',xlsColResVisit:'Res. Visit.',
+    xlsColPuntos:'Puntos',xlsColGrupo:'Grupo',xlsColGolesLocal:'Goles Local',xlsColGolesVisit:'Goles Visit.',
+    xlsColFecha:'Fecha',xlsColSede:'Sede',xlsColID:'ID',xlsColNombre:'Nombre',xlsColBandera:'Bandera',xlsColTieneFoto:'Tiene Foto',
+    xlsSinAsignar:'Sin asignar',xlsSi:'Sí',xlsNo:'No',
+    xlsBackupGenerado:'Backup generado',xlsCampeonRegistrado:'Campeón registrado',xlsPendiente:'Pendiente',
+    xlsTotalParticipantes:'Total participantes',xlsPartidosConResultado:'Partidos con resultado',xlsTotalPredicciones:'Total predicciones',
+    reportModalTitle:'📊 Descargar Reporte',reportModalSub:'Elige el formato que prefieras:',
+    reportOptJpgTitle:'Imagen JPG',reportOptJpgDesc:'Descárgalo como imagen — perfecto para compartir en Slack o WhatsApp.',
+    reportOptPdfTitle:'PDF',reportOptPdfDesc:'Abre el diálogo de impresión — guárdalo como PDF. Ideal para correo o impresión.',
+    reportCancel:'Cancelar',reportPopupBlocked:'Por favor permite las ventanas emergentes para este sitio.',
+    reportNoMatches:'Sin partidos hoy — día de descanso!',reportTodayMatches:'Partidos de hoy',
+    reportLockNote:'Las predicciones se bloquean <strong>10 min antes del inicio</strong> — world-cup-pool-nu.vercel.app',
+    reportLeaderboard:'Tabla de posiciones',reportColPlayer:'JUGADOR',reportColTeam:'EQUIPO',reportColExact:'EXACTOS',
+    reportColWinner:'GANADOR',reportColBonus:'BONUS',reportColTotal:'TOTAL',reportDailyLabel:'REPORTE DIARIO',
+    resetTeamsBtn:'🔄 Reset equipos',resetTeamsTitle:'Borra todos los equipos asignados para poder reasignar',
+    backupExcelBtn:'💾 Backup Excel',backupExcelTitle:'Descargar backup completo en Excel',
     pubTitle:'🚀 Cómo publicar el pool en línea',pubDesc:'Para que todo el equipo acceda desde sus propios dispositivos con datos sincronizados.',
     pubFirebaseResult:'<strong>Resultado:</strong> Un link único para todos, predicciones y tabla sincronizadas en tiempo real.',
     pubStep1:'Ve a <strong>console.firebase.google.com</strong> → Crear proyecto → "Katapult-Polla-2026"',
@@ -766,6 +822,11 @@ function applyI18n() {
     const key = el.getAttribute('data-ph');
     const val = t(key);
     if (val) el.placeholder = val;
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const val = t(key);
+    if (val) el.title = val;
   });
   // Update language toggle buttons
   document.querySelectorAll('.lang-btn').forEach(b => {
@@ -1109,6 +1170,26 @@ let S = {players:[],results:{},predictions:{},activePhase:'Grupos',champion:null
 let currentUser = JSON.parse(localStorage.getItem('polla2026_user') || 'null');
 const DB_PATH = 'polla2026';
 
+/* ─── FASE ACTUAL DEL TORNEO ───
+   Calcula automáticamente en qué fase está el torneo según los resultados
+   ya ingresados (no según una fecha fija ni un valor guardado manualmente).
+   Así, Predicciones y Resultados siempre abren en la fase real del Mundial. */
+function isMatchDecided(m) {
+  const r = S.results[m.id];
+  if (!r || r.home === undefined || r.away === undefined) return false;
+  if (m.id <= 72) return true; // fase de grupos: alcanza con el marcador
+  if (r.home !== r.away) return true; // se decidió en los 90'
+  return r.winner === 'home' || r.winner === 'away'; // empate: necesita ganador por penales
+}
+function getCurrentPhase() {
+  for (const p of PHASES) {
+    const matchesInPhase = MATCHES.filter(m => m.phase === p);
+    if (!matchesInPhase.length) continue;
+    if (!matchesInPhase.every(isMatchDecided)) return p;
+  }
+  return PHASES[PHASES.length - 1]; // todo decidido → Final
+}
+
 /* ─── IMAGE COMPRESSION ─── */
 function compressImage(file, cb) {
   const reader = new FileReader();
@@ -1228,10 +1309,10 @@ function localLoad() {
   // Pre-seed with official results if no results stored yet
   S.results = (d.results && Object.keys(d.results).length > 0) ? d.results : {...OFFICIAL_RESULTS};
   S.predictions = d.predictions || {};
-  // Migrate old 'Octavos' phase to 'Dieciseisavos'
-  const ph = d.activePhase || 'Dieciseisavos';
-  S.activePhase = ph === 'Octavos' ? 'Dieciseisavos' : ph;
   S.champion = d.champion || null;
+  // La fase activa ya NO se guarda/restaura — siempre se calcula en vivo
+  // según el progreso real del torneo (ver getCurrentPhase()).
+  S.activePhase = getCurrentPhase();
 }
 
 function attachListeners() {
@@ -1242,8 +1323,8 @@ function attachListeners() {
     S.results = d.results || {};
     S.predictions = d.predictions || {};
     S.champion = d.champion || null;
-    const ph = d.activePhase || 'Dieciseisavos';
-    S.activePhase = ph === 'Octavos' ? 'Dieciseisavos' : ph;
+    // La fase activa ya NO viene de Firebase (era un estado global compartido
+    // que saltaba a todos los usuarios). Cada sesión calcula/navega la suya.
     S.locks = d.locks || {};
     renderPlayers();
     refreshResolvedNames();
@@ -1380,8 +1461,8 @@ function showTab(tab, btn) {
   document.getElementById('tab-' + tab).classList.add('active');
   if (btn) btn.classList.add('active');
   if (tab === 'grupos') renderGroups();
-  if (tab === 'partidos') renderPartidos();
-  if (tab === 'resultados') renderResultados();
+  if (tab === 'partidos') { S.activePhase = getCurrentPhase(); renderPartidos(); }
+  if (tab === 'resultados') { resPhase = getCurrentPhase(); renderResultados(); }
   if (tab === 'tabla') calcScores();
 }
 
@@ -1448,7 +1529,7 @@ function assignTeamManual(playerId, value) {
   const teamFlag = parts[1];
   const taken = S.players.find(p => p.id !== playerId && p.team === team);
   if (taken) {
-    alert('⚠️ ' + teamFlag + ' ' + team + ' ya está asignado a ' + taken.name);
+    alert(t('teamAlreadyAssigned').replace('{flag}', teamFlag).replace('{team}', team).replace('{name}', taken.name));
     renderPlayers();
     return;
   }
@@ -1464,7 +1545,7 @@ function assignTeamManual(playerId, value) {
 /* ─── SORTEO ─── */
 function resetTeams() {
   if (!isAdmin) return;
-  const con = confirm('⚠️ ¿Borrar TODOS los equipos asignados?\nEsto permite reasignar con el nuevo sistema FIFA.\n\nLas predicciones y puntos NO se borran.');
+  const con = confirm(t('confirmResetTeams'));
   if (!con) return;
 
   S.players.forEach(p => { p.team = null; p.teamFlag = null; });
@@ -1585,8 +1666,7 @@ function renderPartidos() {
 
 function setPhase(ph) {
   S.activePhase = ph;
-  if (DB) DB.ref(`${DB_PATH}/activePhase`).set(ph);
-  else localSave();
+  if (!DB) localSave();
   renderPartidos();
 }
 
@@ -1760,7 +1840,7 @@ function matchCardHTML(m, showPred) {
 
           if (!isDraw) {
             // Ganó en los 90' — visible para todos (admin y jugadores)
-            return `<span class="pts-chip" style="background:rgba(5,150,105,0.12);color:var(--success);font-weight:700">✅ Avanza: ${winnerName}</span>`;
+            return `<span class="pts-chip" style="background:rgba(5,150,105,0.12);color:var(--success);font-weight:700">✅ ${t('advancesLabel')}: ${winnerName}</span>`;
           }
 
           // Empate en 90' — definido (o por definir) por penales
@@ -1768,14 +1848,14 @@ function matchCardHTML(m, showPred) {
             // Admin: selector editable
             const hasWinner = res.winner === 'home' || res.winner === 'away';
             return `<div id="rw-wrap-${m.id}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);width:100%">
-              <span style="font-size:11px;font-weight:700;color:var(--danger)">🥅 Empate — ganador por penales:</span>
+              <span style="font-size:11px;font-weight:700;color:var(--danger)">🥅 ${t('penaltyTieLabel')}</span>
               <select id="rw${m.id}" onchange="saveWinner(${m.id})" style="font-size:12px;padding:5px 10px;border-radius:8px;border:1.5px solid ${hasWinner?'var(--success)':'var(--danger)'};background:var(--bg3);color:var(--text)">
-                <option value="" ${!hasWinner?'selected':''}>— Sin definir —</option>
+                <option value="" ${!hasWinner?'selected':''}>${t('notDefinedOption')}</option>
                 <option value="home" ${res.winner==='home'?'selected':''}>${hLabel}</option>
                 <option value="away" ${res.winner==='away'?'selected':''}>${aLabel}</option>
               </select>
               <span id="rw-badge-${m.id}" style="font-size:11px;font-weight:600;color:${hasWinner?'var(--success)':'var(--danger)'}">
-                ${hasWinner ? '✓ Gana: '+(res.winner==='home'?hLabel:aLabel) : '⚠ Sin definir — bracket bloqueado'}
+                ${hasWinner ? t('winsLabel')+' '+(res.winner==='home'?hLabel:aLabel) : t('bracketLockedWarning')}
               </span>
             </div>`;
           }
@@ -1896,7 +1976,7 @@ function toggleLock(matchId) {
 
 function deleteResult(id) {
   if (!isAdmin) return;
-  if (!confirm('¿Borrar el resultado del partido #' + id + '?')) return;
+  if (!confirm(t('confirmDeleteResult').replace('{id}', id))) return;
   if (DB) {
     DB.ref(`${DB_PATH}/results/${id}`).remove();
   } else {
@@ -1955,10 +2035,10 @@ function saveWinner(id) {
       const label = w === 'home'
         ? (nm.home || match?.home)
         : (nm.away || match?.away);
-      badge.textContent = '✓ Gana: ' + label;
+      badge.textContent = t('winsLabel') + ' ' + label;
       badge.style.color = 'var(--success)';
     } else {
-      badge.textContent = '⚠ Sin definir';
+      badge.textContent = t('notDefinedShort');
       badge.style.color = 'var(--danger)';
     }
   }
@@ -1978,7 +2058,7 @@ async function loadOfficialResults() {
   const btn = document.querySelector('button[onclick="loadOfficialResults()"]');
   const total = Object.keys(OFFICIAL_RESULTS).length;
 
-  if (!confirm(`¿Cargar los ${total} resultados oficiales de la Fase de Grupos? Esto sobrescribirá los resultados existentes de la fase de grupos.`)) return;
+  if (!confirm(t('confirmLoadOfficial').replace('{total}', total))) return;
 
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Cargando...'; }
   if (status) status.textContent = 'Sincronizando...';
@@ -2496,7 +2576,7 @@ async function fetchAPIResults() {
         }
         updated++;
         const extraNote = wentToExtras
-          ? ` (90': ${result.home}-${result.away}, ${duration === 'PENALTY_SHOOTOUT' ? 'definido por penales' : 'definido en tiempo extra'}${result.winner ? ' → avanza ' + (result.winner === 'home' ? match.home : match.away) : ''})`
+          ? ` (90': ${result.home}-${result.away}, ${duration === 'PENALTY_SHOOTOUT' ? t('decidedByPenalties') : t('decidedByExtraTime')}${result.winner ? ' → ' + t('advancesLabel') + ' ' + (result.winner === 'home' ? match.home : match.away) : ''})`
           : '';
         log.innerHTML += `✅ #${match.id}: ${match.home} ${result.home}-${result.away} ${match.away}${extraNote}<br>`;
       } else {
@@ -2605,7 +2685,7 @@ function buildReportHTML() {
           <td style="padding:10px 12px;font-size:11px;color:#94A3B8;">${m.venue.split(',')[0]}</td>
         </tr>`;
       }).join('')
-    : `<tr><td colspan="5" style="padding:16px 12px;text-align:center;color:#94A3B8;font-style:italic;">No matches today — rest day!</td></tr>`;
+    : `<tr><td colspan="5" style="padding:16px 12px;text-align:center;color:#94A3B8;font-style:italic;">${t('reportNoMatches')}</td></tr>`;
 
   const lbRows = lb.map((p, i) => {
     const color = colors[p.idx % colors.length];
@@ -2638,29 +2718,29 @@ function buildReportHTML() {
         <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:6px;">${dateStr} &nbsp;·&nbsp; 48 teams &nbsp;·&nbsp; 104 matches</div>
       </div>
       <div style="background:rgba(200,168,75,0.2);border:1px solid rgba(200,168,75,0.4);border-radius:8px;padding:8px 14px;text-align:center;">
-        <div style="font-size:10px;color:#C8A84B;font-weight:700;letter-spacing:1px;">DAILY REPORT</div>
+        <div style="font-size:10px;color:#C8A84B;font-weight:700;letter-spacing:1px;">${t('reportDailyLabel')}</div>
         <div style="font-size:20px;color:white;font-weight:700;">${new Date().toLocaleDateString('en',{month:'short',day:'numeric'})}</div>
       </div>
     </div>
   </div>
   <div style="background:#F0F4FF;padding:20px 28px;">
-    <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Today's Matches</div>
+    <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">${t('reportTodayMatches')}</div>
     <table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;">
       ${matchRows}
     </table>
-    ${todayMatches.length > 0 ? `<div style="background:#FFF3CD;border:1px solid #C8A84B;border-radius:8px;padding:8px 14px;margin-top:10px;font-size:12px;color:#856404;">Predictions lock <strong>10 min before kickoff</strong> — world-cup-pool-nu.vercel.app</div>` : ''}
+    ${todayMatches.length > 0 ? `<div style="background:#FFF3CD;border:1px solid #C8A84B;border-radius:8px;padding:8px 14px;margin-top:10px;font-size:12px;color:#856404;">${t('reportLockNote')}</div>` : ''}
   </div>
   <div style="background:white;padding:20px 28px;">
-    <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Leaderboard</div>
+    <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">${t('reportLeaderboard')}</div>
     <table style="width:100%;border-collapse:collapse;">
       <thead><tr style="background:#EEF2FF;">
         <th style="padding:8px 12px;text-align:left;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">#</th>
-        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">PLAYER</th>
-        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">TEAM</th>
-        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">EXACT</th>
-        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">WINNER</th>
-        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">BONUS</th>
-        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">TOTAL</th>
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">${t('reportColPlayer')}</th>
+        <th style="padding:8px 12px;text-align:left;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">${t('reportColTeam')}</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">${t('reportColExact')}</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">${t('reportColWinner')}</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">${t('reportColBonus')}</th>
+        <th style="padding:8px 12px;text-align:center;font-size:10px;color:#94A3B8;font-weight:700;letter-spacing:.5px;">${t('reportColTotal')}</th>
       </tr></thead>
       <tbody>${lbRows}</tbody>
     </table>
@@ -2681,26 +2761,26 @@ function downloadReport() {
   overlay.id = 'reportModal';
   overlay.innerHTML = `
     <div class="report-modal">
-      <div class="report-modal-title">📊 Download Report</div>
-      <div class="report-modal-sub">Choose your preferred format:</div>
+      <div class="report-modal-title">${t('reportModalTitle')}</div>
+      <div class="report-modal-sub">${t('reportModalSub')}</div>
 
       <button class="report-opt" onclick="executeReport('jpg')">
         <span class="report-opt-icon">🖼️</span>
         <div>
-          <div class="report-opt-title">JPG Image</div>
-          <div class="report-opt-desc">Download as image — perfect for sharing in Slack or WhatsApp.</div>
+          <div class="report-opt-title">${t('reportOptJpgTitle')}</div>
+          <div class="report-opt-desc">${t('reportOptJpgDesc')}</div>
         </div>
       </button>
 
       <button class="report-opt" onclick="executeReport('pdf')">
         <span class="report-opt-icon">📄</span>
         <div>
-          <div class="report-opt-title">PDF</div>
-          <div class="report-opt-desc">Opens print dialog — save as PDF. Best for email or printing.</div>
+          <div class="report-opt-title">${t('reportOptPdfTitle')}</div>
+          <div class="report-opt-desc">${t('reportOptPdfDesc')}</div>
         </div>
       </button>
 
-      <button class="report-cancel" onclick="document.getElementById('reportModal').remove()">Cancel</button>
+      <button class="report-cancel" onclick="document.getElementById('reportModal').remove()">${t('reportCancel')}</button>
     </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
@@ -2717,7 +2797,7 @@ async function executeReport(type) {
   if (type === 'jpg') {
     // Open in new tab — user takes screenshot or uses browser print to save as image
     const win = window.open(url, '_blank', 'width=760,height=920');
-    if (!win) { alert('Please allow popups for this site.'); return; }
+    if (!win) { alert(t('reportPopupBlocked')); return; }
     win.onload = () => {
       // Inject html2canvas to auto-download as JPG
       const script = win.document.createElement('script');
@@ -2738,7 +2818,7 @@ async function executeReport(type) {
     if (win) {
       win.onload = () => setTimeout(() => win.print(), 600);
     } else {
-      alert('Please allow popups for this site.');
+      alert(t('reportPopupBlocked'));
     }
   }
 }
@@ -2762,7 +2842,7 @@ async function exportBackupXLSX() {
   const dateStr = new Date().toISOString().slice(0,10);
 
   // ── Hoja 1: TABLA DE POSICIONES ──
-  const lbRows = [['#','Participante','Email','Equipo Sorteado','Exactos (3pts)','Ganador (1pt)','Bonus Campeón','Total Pts']];
+  const lbRows = [['#',t('xlsColParticipante'),t('xlsColEmail'),t('xlsColEquipoSorteado'),t('xlsColExactos'),t('xlsColGanador'),t('xlsColBonusCampeon'),t('xlsColTotalPts')]];
   const lbData = S.players.map((p, i) => {
     let pts=0, exact=0, win=0;
     Object.entries(S.results).forEach(([mid, res]) => {
@@ -2771,7 +2851,7 @@ async function exportBackupXLSX() {
       if (mp===3) exact++; if (mp===1) win++;
     });
     const bonus = (S.champion && p.team && p.team.toLowerCase()===S.champion.toLowerCase()) ? 10 : 0;
-    return {name:p.name, email:p.email||'', team:p.team||'Sin asignar', exact, win, bonus, total:pts+bonus, idx:i};
+    return {name:p.name, email:p.email||'', team:p.team||t('xlsSinAsignar'), exact, win, bonus, total:pts+bonus, idx:i};
   }).sort((a,b) => b.total-a.total || b.exact-a.exact);
 
   lbData.forEach((p, i) => {
@@ -2779,10 +2859,10 @@ async function exportBackupXLSX() {
   });
   const wsLb = XLSX.utils.aoa_to_sheet(lbRows);
   wsLb['!cols'] = [{wch:4},{wch:22},{wch:28},{wch:20},{wch:14},{wch:14},{wch:14},{wch:10}];
-  XLSX.utils.book_append_sheet(wb, wsLb, '🏆 Tabla');
+  XLSX.utils.book_append_sheet(wb, wsLb, t('xlsSheetTabla'));
 
   // ── Hoja 2: PREDICCIONES (todas) ──
-  const predRows = [['Partido #','Fase','Local','Visitante','Jugador','Pred. Local','Pred. Visit.','Res. Local','Res. Visit.','Puntos']];
+  const predRows = [[t('xlsColPartidoNum'),t('xlsColFase'),t('xlsColLocal'),t('xlsColVisitante'),t('xlsColJugador'),t('xlsColPredLocal'),t('xlsColPredVisit'),t('xlsColResLocal'),t('xlsColResVisit'),t('xlsColPuntos')]];
   MATCHES.forEach(m => {
     const res = S.results[m.id] || {};
     const hasRes = res.home !== undefined;
@@ -2804,10 +2884,10 @@ async function exportBackupXLSX() {
   });
   const wsPred = XLSX.utils.aoa_to_sheet(predRows);
   wsPred['!cols'] = [{wch:9},{wch:18},{wch:18},{wch:18},{wch:20},{wch:12},{wch:12},{wch:12},{wch:12},{wch:7}];
-  XLSX.utils.book_append_sheet(wb, wsPred, '⚽ Predicciones');
+  XLSX.utils.book_append_sheet(wb, wsPred, t('xlsSheetPredicciones'));
 
   // ── Hoja 3: RESULTADOS OFICIALES ──
-  const resRows = [['Partido #','Fase','Grupo','Local','Visitante','Goles Local','Goles Visit.','Fecha','Sede']];
+  const resRows = [[t('xlsColPartidoNum'),t('xlsColFase'),t('xlsColGrupo'),t('xlsColLocal'),t('xlsColVisitante'),t('xlsColGolesLocal'),t('xlsColGolesVisit'),t('xlsColFecha'),t('xlsColSede')]];
   MATCHES.forEach(m => {
     const res = S.results[m.id];
     if (!res || res.home === undefined) return;
@@ -2815,28 +2895,28 @@ async function exportBackupXLSX() {
   });
   const wsRes = XLSX.utils.aoa_to_sheet(resRows);
   wsRes['!cols'] = [{wch:9},{wch:18},{wch:7},{wch:18},{wch:18},{wch:12},{wch:12},{wch:14},{wch:35}];
-  XLSX.utils.book_append_sheet(wb, wsRes, '📋 Resultados');
+  XLSX.utils.book_append_sheet(wb, wsRes, t('xlsSheetResultados'));
 
   // ── Hoja 4: PARTICIPANTES ──
-  const playRows = [['ID','Nombre','Email','Equipo Sorteado','Bandera','Tiene Foto']];
+  const playRows = [[t('xlsColID'),t('xlsColNombre'),t('xlsColEmail'),t('xlsColEquipoSorteado'),t('xlsColBandera'),t('xlsColTieneFoto')]];
   S.players.forEach(p => {
-    playRows.push([p.id, p.name, p.email||'', p.team||'', p.teamFlag||'', p.photo ? 'Sí' : 'No']);
+    playRows.push([p.id, p.name, p.email||'', p.team||'', p.teamFlag||'', p.photo ? t('xlsSi') : t('xlsNo')]);
   });
   const wsPlay = XLSX.utils.aoa_to_sheet(playRows);
   wsPlay['!cols'] = [{wch:28},{wch:22},{wch:30},{wch:20},{wch:8},{wch:10}];
-  XLSX.utils.book_append_sheet(wb, wsPlay, '👥 Participantes');
+  XLSX.utils.book_append_sheet(wb, wsPlay, t('xlsSheetParticipantes'));
 
   // ── Hoja 5: METADATA ──
   const metaRows = [
-    ['Backup generado', now],
-    ['Campeón registrado', S.champion || 'Pendiente'],
-    ['Total participantes', S.players.length],
-    ['Partidos con resultado', Object.keys(S.results).length],
-    ['Total predicciones', Object.values(S.predictions).reduce((acc,mp)=>acc+Object.keys(mp).length,0)],
+    [t('xlsBackupGenerado'), now],
+    [t('xlsCampeonRegistrado'), S.champion || t('xlsPendiente')],
+    [t('xlsTotalParticipantes'), S.players.length],
+    [t('xlsPartidosConResultado'), Object.keys(S.results).length],
+    [t('xlsTotalPredicciones'), Object.values(S.predictions).reduce((acc,mp)=>acc+Object.keys(mp).length,0)],
   ];
   const wsMeta = XLSX.utils.aoa_to_sheet(metaRows);
   wsMeta['!cols'] = [{wch:25},{wch:30}];
-  XLSX.utils.book_append_sheet(wb, wsMeta, 'ℹ️ Info');
+  XLSX.utils.book_append_sheet(wb, wsMeta, t('xlsSheetInfo'));
 
   // Descargar
   XLSX.writeFile(wb, `polla-mundial-2026-backup-${dateStr}.xlsx`);
