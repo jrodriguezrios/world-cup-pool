@@ -496,6 +496,9 @@ select option{background:white;}
           <span id="autoUpdateStatus" style="font-size:12px;color:var(--text3)"></span>
         </div>
         <div id="autoUpdateLog" style="margin-top:8px;font-size:12px;color:var(--text2);display:none;background:var(--bg3);border-radius:8px;padding:10px;max-height:120px;overflow-y:auto;"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--text2);background:rgba(200,168,75,0.08);border:1px solid rgba(200,168,75,0.25);border-radius:8px;padding:8px 12px;line-height:1.6" data-i18n="autoUpdateNote">
+          ⚠️ <strong>Eliminatorias:</strong> los puntos de predicción siempre se calculan con el marcador de los <strong>90 minutos</strong>, aunque el partido se decida después por tiempo extra o penales. Si hubo empate a los 90' y el partido fue a penales, el equipo que avanza a la siguiente ronda se marca por separado (automático si viene de la API, o con el selector "🥅 Empate — ganador por penales" si lo ingresas a mano) y no afecta los puntos de nadie.
+        </div>
       </div>
       <!-- ══ CARGA OFICIAL DE RESULTADOS ══ -->
       <div class="card" style="border-left:4px solid var(--wc-gold);background:linear-gradient(135deg,rgba(200,168,75,0.05),rgba(0,61,165,0.03));">
@@ -636,6 +639,7 @@ const I18N = {
     scoreBonus:'Your drawn team<br>wins the World Cup 🏆',
     predOf:'📊 Predictions of:',myPredBadge:'✓ My predictions',myPredLabel:'📊 My predictions',myPredOnly:'✓ Only yours',
     autoUpdateTitle:'🤖 Automatic updates',autoUpdateDesc:'Results are fetched automatically from football-data.org every 5 minutes. You can also force a manual update.',
+    autoUpdateNote:'⚠️ <strong>Knockout rounds:</strong> prediction points are always calculated using the <strong>90-minute</strong> score, even if the match is later decided by extra time or penalties. If it was tied at 90\' and went to penalties, the team advancing to the next round is marked separately (automatic when synced from the API, or with the "🥅 Tied — penalty winner" selector if entered manually) and does not affect anyone\'s points.',
     autoUpdateBtn:'🔄 Update results now',resultsTitle:'📋 Official results',
     resultsDesc:'Auto results appear here. You can also manually enter or correct scores.',
     lbTitle:'🏆 Leaderboard',lbRefresh:'Refresh',lbPlayer:'Player',lbTeam:'Team',lbExact:'Exact',lbWinner:'Winner',
@@ -700,6 +704,7 @@ const I18N = {
     scoreBonus:'Tu equipo sorteado<br>gana el Mundial 🏆',
     predOf:'📊 Predicciones de:',myPredBadge:'✓ Mis predicciones',myPredLabel:'📊 Mis predicciones',myPredOnly:'✓ Solo las tuyas',
     autoUpdateTitle:'🤖 Actualización automática',autoUpdateDesc:'Los resultados se traen automáticamente de football-data.org cada 5 minutos. También puedes forzar una actualización manual.',
+    autoUpdateNote:'⚠️ <strong>Eliminatorias:</strong> los puntos de predicción siempre se calculan con el marcador de los <strong>90 minutos</strong>, aunque el partido se decida después por tiempo extra o penales. Si hubo empate a los 90\' y el partido fue a penales, el equipo que avanza a la siguiente ronda se marca por separado (automático si viene de la API, o con el selector "🥅 Empate — ganador por penales" si lo ingresas a mano) y no afecta los puntos de nadie.',
     autoUpdateBtn:'🔄 Actualizar resultados ahora',resultsTitle:'📋 Resultados oficiales',
     resultsDesc:'Los resultados automáticos aparecen aquí. También puedes corregir o ingresar marcadores manualmente.',
     lbTitle:'🏆 Tabla de posiciones',lbRefresh:'Actualizar',lbPlayer:'Participante',lbTeam:'Equipo',lbExact:'Exactos',lbWinner:'Ganador',
@@ -2426,8 +2431,20 @@ async function fetchAPIResults() {
 
       const homeTeam = am.homeTeam?.name || am.homeTeam?.shortName || '';
       const awayTeam = am.awayTeam?.name || am.awayTeam?.shortName || '';
-      const homeGoals = am.score?.fullTime?.home;
-      const awayGoals = am.score?.fullTime?.away;
+
+      // ── Tiempo regular vs. tiempo extra/penales ──
+      // duration: 'REGULAR' (90'), 'EXTRA_TIME' (120'), 'PENALTY_SHOOTOUT'
+      // fullTime puede incluir goles de tiempo extra (o incluso el marcador de
+      // penales sumado). Para los PUNTOS de predicción siempre usamos el
+      // resultado de los 90 minutos (regularTime), nunca fullTime, cuando el
+      // partido se decidió fuera del tiempo regular.
+      const duration = am.score?.duration || 'REGULAR';
+      const wentToExtras = duration !== 'REGULAR';
+      const rt = am.score?.regularTime;
+      const ft = am.score?.fullTime;
+      const useRT = wentToExtras && rt && rt.home !== null && rt.home !== undefined;
+      const homeGoals = useRT ? rt.home : ft?.home;
+      const awayGoals = useRT ? rt.away : ft?.away;
 
       if (homeGoals === null || homeGoals === undefined || awayGoals === null || awayGoals === undefined) continue;
 
@@ -2438,14 +2455,30 @@ async function fetchAPIResults() {
         const result = inverted 
           ? { home: awayGoals, away: homeGoals }
           : { home: homeGoals, away: awayGoals };
-        
+
+        // ── Quién avanza (puede diferir del marcador de 90') ──
+        // Si el marcador de 90' fue empate y el partido se decidió por
+        // penales/tiempo extra, la API ya nos dice el ganador real —
+        // lo guardamos como 'winner' para resolver el bracket, SIN tocar
+        // el marcador usado para puntos.
+        if (wentToExtras && result.home === result.away && am.score?.winner) {
+          const apiWinner = am.score.winner; // 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW'
+          if (apiWinner === 'HOME_TEAM' || apiWinner === 'AWAY_TEAM') {
+            const wonHome = apiWinner === 'HOME_TEAM';
+            result.winner = inverted ? (wonHome ? 'away' : 'home') : (wonHome ? 'home' : 'away');
+          }
+        }
+
         if (DB) {
           updates[`polla2026/results/${match.id}`] = result;
         } else {
           S.results[match.id] = result;
         }
         updated++;
-        log.innerHTML += `✅ #${match.id}: ${match.home} ${result.home}-${result.away} ${match.away}<br>`;
+        const extraNote = wentToExtras
+          ? ` (90': ${result.home}-${result.away}, ${duration === 'PENALTY_SHOOTOUT' ? 'definido por penales' : 'definido en tiempo extra'}${result.winner ? ' → avanza ' + (result.winner === 'home' ? match.home : match.away) : ''})`
+          : '';
+        log.innerHTML += `✅ #${match.id}: ${match.home} ${result.home}-${result.away} ${match.away}${extraNote}<br>`;
       } else {
         noMap++;
         log.innerHTML += `${t('noMap')} ${homeTeam} vs ${awayTeam}<br>`;
