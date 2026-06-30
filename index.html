@@ -2353,7 +2353,12 @@ const TEAM_MAP_API = {
 };
 
 // Mapeo de partidos de la polla por equipos para matchear con la API
-const POLLA_MATCH_MAP = MATCHES.filter(m => m.id <= 72).map(m => ({
+// Incluye fase de grupos Y cualquier ronda de eliminatorias que ya tenga
+// nombres reales de equipos (no placeholders tipo "Gan. M73" / "Perd. M101")
+const PLACEHOLDER_RE = /^(Gan\.|Perd\.)/;
+const POLLA_MATCH_MAP = MATCHES.filter(m =>
+  !PLACEHOLDER_RE.test(m.home) && !PLACEHOLDER_RE.test(m.away)
+).map(m => ({
   id: m.id, home: m.home, away: m.away
 }));
 
