@@ -675,6 +675,7 @@ const I18N = {
     lastUpdate:'✅ Last update:',results:'results',
     errCors:'❌ Error:',corsHint:'💡 If CORS fails, results can be entered manually below.',
     updateBtn:'🔄 Update results now',
+    penaltiesAdvance:'Advances on penalties',penaltiesPending:'Tied — penalty shootout result pending',
     pubTitle:'🚀 How to publish the pool online',pubDesc:'So the whole team can access from their own devices with synced data.',
     pubFirebaseResult:'<strong>Result:</strong> A unique link for everyone, predictions and leaderboard synced in real time.',
     pubStep1:'Go to <strong>console.firebase.google.com</strong> → Create project → "Katapult-Polla-2026"',
@@ -739,6 +740,7 @@ const I18N = {
     lastUpdate:'✅ Última actualización:',results:'resultados',
     errCors:'❌ Error:',corsHint:'💡 Si falla el CORS, los resultados se pueden ingresar manualmente abajo.',
     updateBtn:'🔄 Actualizar resultados ahora',
+    penaltiesAdvance:'Avanza por penales',penaltiesPending:'Empate — definición por penales pendiente',
     pubTitle:'🚀 Cómo publicar el pool en línea',pubDesc:'Para que todo el equipo acceda desde sus propios dispositivos con datos sincronizados.',
     pubFirebaseResult:'<strong>Resultado:</strong> Un link único para todos, predicciones y tabla sincronizadas en tiempo real.',
     pubStep1:'Ve a <strong>console.firebase.google.com</strong> → Crear proyecto → "Katapult-Polla-2026"',
@@ -1746,23 +1748,41 @@ function matchCardHTML(m, showPred) {
           ? (hasRes ? `<span class="msaved">✓ ${res.home}–${res.away} ${t('saved')}</span>` : `<span class="mlbl">${t('noResult')}</span>`)
           : (hasRes ? `<span class="msaved">✓ Resultado oficial</span>` : `<span class="mlbl">⏳ Pendiente</span>`)
         }
-        ${isAdmin && m.id > 72 ? (() => {
-          // Selector de ganador por penales para fase eliminatoria
-          const isDraw = hasRes && res.home === res.away;
-          const hasWinner = res.winner === 'home' || res.winner === 'away';
+        ${m.id > 72 && hasRes ? (() => {
+          const isDraw = res.home === res.away;
           const hLabel = getTeamName(m.id,'home');
           const aLabel = getTeamName(m.id,'away');
-          return `<div id="rw-wrap-${m.id}" style="display:${isDraw?'flex':'none'};align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);width:100%">
-            <span style="font-size:11px;font-weight:700;color:var(--danger)">🥅 Empate — ganador por penales:</span>
-            <select id="rw${m.id}" onchange="saveWinner(${m.id})" style="font-size:12px;padding:5px 10px;border-radius:8px;border:1.5px solid ${hasWinner?'var(--success)':'var(--danger)'};background:var(--bg3);color:var(--text)">
-              <option value="" ${!hasWinner?'selected':''}>— Sin definir —</option>
-              <option value="home" ${res.winner==='home'?'selected':''}>${hLabel}</option>
-              <option value="away" ${res.winner==='away'?'selected':''}>${aLabel}</option>
-            </select>
-            <span id="rw-badge-${m.id}" style="font-size:11px;font-weight:600;color:${hasWinner?'var(--success)':'var(--danger)'}">
-              ${hasWinner ? '✓ Gana: '+(res.winner==='home'?hLabel:aLabel) : '⚠ Sin definir — bracket bloqueado'}
-            </span>
-          </div>`;
+          let winnerName = null;
+          if (res.home > res.away) winnerName = hLabel;
+          else if (res.away > res.home) winnerName = aLabel;
+          else if (res.winner === 'home') winnerName = hLabel;
+          else if (res.winner === 'away') winnerName = aLabel;
+
+          if (!isDraw) {
+            // Ganó en los 90' — visible para todos (admin y jugadores)
+            return `<span class="pts-chip" style="background:rgba(5,150,105,0.12);color:var(--success);font-weight:700">✅ Avanza: ${winnerName}</span>`;
+          }
+
+          // Empate en 90' — definido (o por definir) por penales
+          if (isAdmin) {
+            // Admin: selector editable
+            const hasWinner = res.winner === 'home' || res.winner === 'away';
+            return `<div id="rw-wrap-${m.id}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);width:100%">
+              <span style="font-size:11px;font-weight:700;color:var(--danger)">🥅 Empate — ganador por penales:</span>
+              <select id="rw${m.id}" onchange="saveWinner(${m.id})" style="font-size:12px;padding:5px 10px;border-radius:8px;border:1.5px solid ${hasWinner?'var(--success)':'var(--danger)'};background:var(--bg3);color:var(--text)">
+                <option value="" ${!hasWinner?'selected':''}>— Sin definir —</option>
+                <option value="home" ${res.winner==='home'?'selected':''}>${hLabel}</option>
+                <option value="away" ${res.winner==='away'?'selected':''}>${aLabel}</option>
+              </select>
+              <span id="rw-badge-${m.id}" style="font-size:11px;font-weight:600;color:${hasWinner?'var(--success)':'var(--danger)'}">
+                ${hasWinner ? '✓ Gana: '+(res.winner==='home'?hLabel:aLabel) : '⚠ Sin definir — bracket bloqueado'}
+              </span>
+            </div>`;
+          }
+          // Jugador: badge de solo lectura
+          return winnerName
+            ? `<span class="pts-chip" style="background:rgba(5,150,105,0.12);color:var(--success);font-weight:700">⚽ ${t('penaltiesAdvance')}: ${winnerName}</span>`
+            : `<span class="pts-chip" style="background:rgba(213,43,30,0.1);color:var(--danger);font-weight:700">⏳ ${t('penaltiesPending')}</span>`;
         })() : ''}
         ${isAdmin ? `
           ${hasRes ? `<button class="btn btn-sm" style="font-size:11px;color:var(--danger);border-color:var(--danger)" onclick="deleteResult(${m.id})">🗑️ Borrar</button>` : ''}
