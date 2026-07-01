@@ -971,6 +971,26 @@ function getMatchUTC(m) {
   const off = TZ_OFF[m.tz] !== undefined ? TZ_OFF[m.tz] : -5;
   return Date.UTC(2026, month, day, h - off, min);
 }
+
+/* ─── HORA COLOMBIA (UTC-5) — sin DST todo el año ─── */
+function toColombiaTime(m) {
+  const utc = getMatchUTC(m);
+  // Colombia = UTC - 5
+  const colMs = utc - 5 * 3600000;
+  const d = new Date(colMs);
+  const hh = String(d.getUTCHours()).padStart(2,'0');
+  const mm = String(d.getUTCMinutes()).padStart(2,'0');
+  const dayN = d.getUTCDate();
+  const monN = d.getUTCMonth(); // 0-indexed
+  const MON_ES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  // Si la fecha cambia respecto al día original (ej. 17:00 SF → 00:00 UTC → 19:00 COL mismo día)
+  const parts = m.date.split(' ');
+  const origDay = parseInt(parts[1]);
+  const sameDay = (dayN === origDay);
+  const dayLabel = sameDay ? '' : ` ${dayN} ${MON_ES[monN]}`;
+  return `${hh}:${mm}${dayLabel} COL`;
+}
+
 function isLocked(m) {
   if (S.locks && S.locks[m.id]) return true;
   return Date.now() >= getMatchUTC(m) - 10 * 60 * 1000;
@@ -1120,14 +1140,14 @@ const MATCHES = [
   // Fuente oficial: bracketmundial2026.com / FIFA · Verificado 29 Jun 2026
   {id:73,group:'R32',phase:'Dieciseisavos',home:'Sudáfrica',away:'Canadá',date:'Dom 28 Jun',venue:'SoFi Stadium, Los Ángeles',time:'12:00',tz:'LA'},      // ✅ 0-1
   {id:74,group:'R32',phase:'Dieciseisavos',home:'Alemania',away:'Paraguay',date:'Lun 29 Jun',venue:'Gillette Stadium, Boston',time:'16:30',tz:'Boston'},
-  {id:75,group:'R32',phase:'Dieciseisavos',home:'Países Bajos',away:'Marruecos',date:'Lun 29 Jun',venue:'Estadio BBVA, Monterrey',time:'20:00',tz:'MTY'},
+  {id:75,group:'R32',phase:'Dieciseisavos',home:'Países Bajos',away:'Marruecos',date:'Lun 29 Jun',venue:'Estadio BBVA, Monterrey',time:'19:00',tz:'MTY'},
   {id:76,group:'R32',phase:'Dieciseisavos',home:'Brasil',away:'Japón',date:'Lun 29 Jun',venue:'NRG Stadium, Houston',time:'12:00',tz:'Houston'},
   {id:77,group:'R32',phase:'Dieciseisavos',home:'Francia',away:'Suecia',date:'Mar 30 Jun',venue:'MetLife Stadium, NJ',time:'17:00',tz:'NYC'},
   {id:78,group:'R32',phase:'Dieciseisavos',home:'Costa de Marfil',away:'Noruega',date:'Mar 30 Jun',venue:'AT&T Stadium, Dallas',time:'12:00',tz:'Dallas'},
-  {id:79,group:'R32',phase:'Dieciseisavos',home:'México',away:'Ecuador',date:'Mar 30 Jun',venue:'Estadio Azteca, CDMX',time:'20:00',tz:'CDMX'},
+  {id:79,group:'R32',phase:'Dieciseisavos',home:'México',away:'Ecuador',date:'Mar 30 Jun',venue:'Estadio Azteca, CDMX',time:'19:00',tz:'CDMX'},
   {id:80,group:'R32',phase:'Dieciseisavos',home:'Inglaterra',away:'R.D. del Congo',date:'Mié 1 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
-  {id:81,group:'R32',phase:'Dieciseisavos',home:'USA',away:'Bosnia y Herz.',date:'Mié 1 Jul',venue:"Levi's Stadium, San Francisco",time:'13:00',tz:'SF'},
-  {id:82,group:'R32',phase:'Dieciseisavos',home:'Bélgica',away:'Senegal',date:'Mié 1 Jul',venue:'Lumen Field, Seattle',time:'17:00',tz:'Seattle'},
+  {id:81,group:'R32',phase:'Dieciseisavos',home:'USA',away:'Bosnia y Herz.',date:'Mié 1 Jul',venue:"Levi's Stadium, San Francisco",time:'17:00',tz:'SF'},
+  {id:82,group:'R32',phase:'Dieciseisavos',home:'Bélgica',away:'Senegal',date:'Mié 1 Jul',venue:'Lumen Field, Seattle',time:'13:00',tz:'Seattle'},
   {id:83,group:'R32',phase:'Dieciseisavos',home:'Portugal',away:'Croacia',date:'Jue 2 Jul',venue:'BMO Field, Toronto',time:'19:00',tz:'Toronto'},
   {id:84,group:'R32',phase:'Dieciseisavos',home:'España',away:'Austria',date:'Jue 2 Jul',venue:'SoFi Stadium, Los Ángeles',time:'12:00',tz:'LA'},
   {id:85,group:'R32',phase:'Dieciseisavos',home:'Suiza',away:'Argelia',date:'Jue 2 Jul',venue:'BC Place, Vancouver',time:'20:00',tz:'Vancouver'},
@@ -1136,20 +1156,20 @@ const MATCHES = [
   {id:88,group:'R32',phase:'Dieciseisavos',home:'Australia',away:'Egipto',date:'Vie 3 Jul',venue:'AT&T Stadium, Dallas',time:'13:00',tz:'Dallas'},
   // ═══ OCTAVOS DE FINAL (Ronda de 16) · 4–7 Jul ═══
   {id:89,group:'R16',phase:'Octavos de Final',home:'Gan. M74',away:'Gan. M77',date:'Sáb 4 Jul',venue:'Lincoln Financial, Filadelfia',time:'17:00',tz:'Philly'},
-  {id:90,group:'R16',phase:'Octavos de Final',home:'Gan. M73',away:'Gan. M75',date:'Sáb 4 Jul',venue:'NRG Stadium, Houston',time:'13:00',tz:'Houston'},
+  {id:90,group:'R16',phase:'Octavos de Final',home:'Gan. M73',away:'Gan. M75',date:'Sáb 4 Jul',venue:'NRG Stadium, Houston',time:'12:00',tz:'Houston'},
   {id:91,group:'R16',phase:'Octavos de Final',home:'Gan. M76',away:'Gan. M78',date:'Dom 5 Jul',venue:'MetLife Stadium, NJ',time:'16:00',tz:'NYC'},
-  {id:92,group:'R16',phase:'Octavos de Final',home:'Gan. M79',away:'Gan. M80',date:'Dom 5 Jul',venue:'Estadio Azteca, CDMX',time:'20:00',tz:'CDMX'},
-  {id:93,group:'R16',phase:'Octavos de Final',home:'Gan. M83',away:'Gan. M84',date:'Lun 6 Jul',venue:'AT&T Stadium, Dallas',time:'15:00',tz:'Dallas'},
-  {id:94,group:'R16',phase:'Octavos de Final',home:'Gan. M81',away:'Gan. M82',date:'Lun 6 Jul',venue:'Lumen Field, Seattle',time:'20:00',tz:'Seattle'},
+  {id:92,group:'R16',phase:'Octavos de Final',home:'Gan. M79',away:'Gan. M80',date:'Dom 5 Jul',venue:'Estadio Azteca, CDMX',time:'18:00',tz:'CDMX'},
+  {id:93,group:'R16',phase:'Octavos de Final',home:'Gan. M83',away:'Gan. M84',date:'Lun 6 Jul',venue:'AT&T Stadium, Dallas',time:'14:00',tz:'Dallas'},
+  {id:94,group:'R16',phase:'Octavos de Final',home:'Gan. M81',away:'Gan. M82',date:'Lun 6 Jul',venue:'Lumen Field, Seattle',time:'17:00',tz:'Seattle'},
   {id:95,group:'R16',phase:'Octavos de Final',home:'Gan. M86',away:'Gan. M88',date:'Mar 7 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
-  {id:96,group:'R16',phase:'Octavos de Final',home:'Gan. M85',away:'Gan. M87',date:'Mar 7 Jul',venue:'BC Place, Vancouver',time:'16:00',tz:'Vancouver'},
+  {id:96,group:'R16',phase:'Octavos de Final',home:'Gan. M85',away:'Gan. M87',date:'Mar 7 Jul',venue:'BC Place, Vancouver',time:'13:00',tz:'Vancouver'},
   // ═══ CUARTOS DE FINAL · 9–11 Jul ═══
   {id:97,group:'CF',phase:'Cuartos de Final',home:'Gan. M89',away:'Gan. M90',date:'Jue 9 Jul',venue:'Gillette Stadium, Boston',time:'16:00',tz:'Boston'},
-  {id:98,group:'CF',phase:'Cuartos de Final',home:'Gan. M93',away:'Gan. M94',date:'Vie 10 Jul',venue:'SoFi Stadium, Los Ángeles',time:'15:00',tz:'LA'},
+  {id:98,group:'CF',phase:'Cuartos de Final',home:'Gan. M93',away:'Gan. M94',date:'Vie 10 Jul',venue:'SoFi Stadium, Los Ángeles',time:'12:00',tz:'LA'},
   {id:99,group:'CF',phase:'Cuartos de Final',home:'Gan. M91',away:'Gan. M92',date:'Sáb 11 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
-  {id:100,group:'CF',phase:'Cuartos de Final',home:'Gan. M95',away:'Gan. M96',date:'Sáb 11 Jul',venue:'Arrowhead Stadium, Kansas City',time:'21:00',tz:'KC'},
+  {id:100,group:'CF',phase:'Cuartos de Final',home:'Gan. M95',away:'Gan. M96',date:'Sáb 11 Jul',venue:'Arrowhead Stadium, Kansas City',time:'20:00',tz:'KC'},
   // ═══ SEMIFINALES · 14–15 Jul ═══
-  {id:101,group:'SF',phase:'Semifinales',home:'Gan. M97',away:'Gan. M98',date:'Lun 14 Jul',venue:'AT&T Stadium, Dallas',time:'15:00',tz:'Dallas'},
+  {id:101,group:'SF',phase:'Semifinales',home:'Gan. M97',away:'Gan. M98',date:'Lun 14 Jul',venue:'AT&T Stadium, Dallas',time:'14:00',tz:'Dallas'},
   {id:102,group:'SF',phase:'Semifinales',home:'Gan. M99',away:'Gan. M100',date:'Mar 15 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'15:00',tz:'Atlanta'},
   // ═══ TERCER PUESTO y FINAL ═══
   {id:103,group:'3P',phase:'Tercer puesto',home:'Perd. M101',away:'Perd. M102',date:'Sáb 18 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
@@ -1800,7 +1820,7 @@ function matchCardHTML(m, showPred) {
       <div class="mmeta-left">
         <span class="mmeta-group">${t('group')} ${m.group} · #${m.id}</span>
         <span class="mmeta-venue">📍 ${m.venue}</span>
-        <span class="mmeta-datetime">📅 ${m.date} ⏰ ${m.time} (${m.tz})</span>
+        <span class="mmeta-datetime">📅 ${m.date} ⏰ ${m.time} (${m.tz}) · 🇨🇴 ${toColombiaTime(m)}</span>
       </div>
       <div class="mmeta-right">${lockBadge}</div>
     </div>
