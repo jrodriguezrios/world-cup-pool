@@ -1181,9 +1181,15 @@ function isMatchDecided(m) {
   if (r.home !== r.away) return true; // se decidió en los 90'
   return r.winner === 'home' || r.winner === 'away'; // empate: necesita ganador por penales
 }
+
+/* ─── HELPER: filtra partidos por fase respetando PHASE_ALIAS ─── */
+function phaseMatches(ph) {
+  return MATCHES.filter(m => m.phase === ph || PHASE_ALIAS[m.phase] === ph);
+}
+
 function getCurrentPhase() {
   for (const p of PHASES) {
-    const matchesInPhase = MATCHES.filter(m => m.phase === p);
+    const matchesInPhase = phaseMatches(p); // ← usa alias para 'Octavos' → 'Dieciseisavos'
     if (!matchesInPhase.length) continue;
     if (!matchesInPhase.every(isMatchDecided)) return p;
   }
@@ -1681,7 +1687,7 @@ function onPlayerChange() {
 function renderMatchList() {
   const list = document.getElementById('matchesList');
   const savedScroll = window.scrollY;
-  const allMatches = MATCHES.filter(m => m.phase === S.activePhase)
+  const allMatches = phaseMatches(S.activePhase)  // ← respeta alias Octavos→Dieciseisavos
     .sort((a, b) => getMatchUTC(a) - getMatchUTC(b));
   if (!S.players.length) { list.innerHTML = `<div class="empty">${t('addFirst')}</div>`; return; }
   if (!S.currentPlayer) { list.innerHTML = `<div class="empty">${t('selectToSee')}</div>`; return; }
@@ -1789,7 +1795,7 @@ function matchCardHTML(m, showPred) {
     else if (mins > 0 && mins <= 60) lockBadge = `<span class="lock-badge lock-warn">${t('closesIn')} ${mins} min</span>`;
   }
 
-  return `<div class="mcard${locked ? ' locked' : ''}">
+  return `<div class="mcard${locked ? ' locked' : ''}" id="mcard-${m.id}">
     <div class="mmeta">
       <div class="mmeta-left">
         <span class="mmeta-group">${t('group')} ${m.group} · #${m.id}</span>
@@ -1877,9 +1883,32 @@ function savePred(id) {
   if (!S.currentPlayer) return;
   // Player can only save own predictions
   if (!isAdmin && currentUser && S.currentPlayer !== currentUser.id) return;
-  // Double-check lock
+  // Double-check lock — if it just locked, disable inputs immediately and bail
   const m = MATCHES.find(x => x.id === id);
-  if (m && !isAdmin && isLocked(m)) return;
+  if (m && !isAdmin && isLocked(m)) {
+    // Deshabilitar visualmente los inputs de este partido de inmediato
+    ['ph', 'pa'].forEach(pre => {
+      const el = document.getElementById(pre + id);
+      if (el) {
+        el.disabled = true;
+        el.style.opacity = '0.5';
+        el.style.background = '#EFEFEF';
+        el.style.cursor = 'not-allowed';
+      }
+    });
+    // Mostrar badge de bloqueo si no existe ya
+    const card = document.getElementById('mcard-' + id);
+    if (card && !card.querySelector('.lock-now-badge')) {
+      const metaRight = card.querySelector('.mmeta-right');
+      if (metaRight) {
+        const badge = document.createElement('span');
+        badge.className = 'lock-badge lock-now-badge';
+        badge.textContent = '🔒 Cerrado';
+        metaRight.appendChild(badge);
+      }
+    }
+    return;
+  }
   const h = document.getElementById('ph' + id)?.value;
   const a = document.getElementById('pa' + id)?.value;
   if (h === '' || a === '' || h == null || a == null) return;
@@ -1911,7 +1940,7 @@ function setResPhase(ph) { resPhase = ph; renderResultados(); }
 function renderResultList() {
   refreshResolvedNames();
   const list = document.getElementById('resultsList');
-  const allMatches = MATCHES.filter(m => m.phase === resPhase)
+  const allMatches = phaseMatches(resPhase)  // ← respeta alias Octavos→Dieciseisavos
     .sort((a, b) => getMatchUTC(a) - getMatchUTC(b));
 
   const withResult    = allMatches.filter(m => { const r = S.results[m.id]; return r && r.home !== undefined && r.away !== undefined; });
@@ -1997,19 +2026,32 @@ function saveResult(id) {
   if (id > 72) {
     const existing = S.results[id] || {};
     if (hv === av && existing.winner) val.winner = existing.winner;
-    // Si ya no hay empate, limpiar el winner
-    // (si es distinto, no se guarda y Firebase/local no tiene winner)
   }
+  // Actualizar estado local inmediatamente (necesario para re-render correcto)
+  S.results[id] = val;
   if (DB) DB.ref(`${DB_PATH}/results/${id}`).set(val);
-  else { S.results[id] = val; localSave(); }
+  else localSave();
   ['rh', 'ra'].forEach(pre => { const el = document.getElementById(pre + id); if (el) el.style.borderColor = 'var(--wc-blue)'; });
-  // Si hay empate, mostrar el selector de ganador
-  if (id > 72 && hv === av) {
+
+  // Para eliminatorias: si es empate, asegurar que aparece el selector de ganador por penales.
+  // Si el card fue renderizado sin resultado, rw-wrap-${id} no existe aún → re-renderizar el card.
+  if (id > 72) {
     const wrapEl = document.getElementById('rw-wrap-' + id);
-    if (wrapEl) { wrapEl.style.display = 'flex'; }
-  } else {
-    const wrapEl = document.getElementById('rw-wrap-' + id);
-    if (wrapEl) { wrapEl.style.display = 'none'; }
+    if (hv === av) {
+      if (wrapEl) {
+        wrapEl.style.display = 'flex';
+      } else {
+        // El selector aún no existe en el DOM → re-renderizar solo esta tarjeta
+        refreshResolvedNames();
+        const m = MATCHES.find(x => x.id === id);
+        const cardEl = document.getElementById('mcard-' + id);
+        if (m && cardEl) {
+          cardEl.outerHTML = matchCardHTML(m, false);
+        }
+      }
+    } else {
+      if (wrapEl) { wrapEl.style.display = 'none'; }
+    }
   }
 }
 
@@ -2423,11 +2465,11 @@ function calcScores() {
   }).join('');
 }
 
-/* ─── AUTO-REFRESH lock status each minute ─── */
+/* ─── AUTO-REFRESH lock status cada 15 seg (bloqueo visual casi instantáneo) ─── */
 setInterval(() => {
   const active = document.querySelector('.section.active');
   if (active && active.id === 'tab-partidos') renderMatchList();
-}, 60000);
+}, 15000);
 
 /* ═══════════════════════════════════════════
    🤖 ACTUALIZACIÓN AUTOMÁTICA DE RESULTADOS
