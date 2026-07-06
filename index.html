@@ -503,10 +503,10 @@ select option{background:white;}
       <!-- ══ CARGA OFICIAL DE RESULTADOS ══ -->
       <div class="card" style="border-left:4px solid var(--wc-gold);background:linear-gradient(135deg,rgba(200,168,75,0.05),rgba(0,61,165,0.03));">
         <div class="card-title" style="color:var(--gold)">⚽ Resultados Oficiales — Fase de Grupos</div>
-        <div class="card-sub" style="margin-bottom:12px">Carga todos los <strong>72 resultados</strong> reales de la Fase de Grupos (11–27 Jun 2026) con un solo clic. Se sincronizan para todos los participantes.</div>
+        <div class="card-sub" style="margin-bottom:12px">Carga los <strong>93 resultados</strong> reales (Fase de Grupos + Dieciseisavos + Octavos completados) con un solo clic. Se sincronizan para todos los participantes.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-gold" onclick="loadOfficialResults()" style="font-size:14px;padding:10px 20px;">
-            📥 Cargar 72 resultados oficiales
+            📥 Cargar 93 resultados oficiales
           </button>
           <span id="officialLoadStatus" style="font-size:12px;color:var(--text3)"></span>
         </div>
@@ -673,7 +673,7 @@ const I18N = {
     corsProxy:'↪ Using CORS proxy...',noMap:'⚠️ No mapping:',
     updateDone:'✅ Done:',updated:'updated',matchesInApi:'matches in API',
     lastUpdate:'✅ Last update:',results:'results',
-    errCors:'❌ Error:',corsHint:'💡 If CORS fails, results can be entered manually below.',
+    errCors:'❌ Error connecting to football-data.org:',corsHint:'💡 Check that the API key is valid (football-data.org free account). Results can also be entered manually below.',
     updateBtn:'🔄 Update results now',
     penaltiesAdvance:'Advances on penalties',penaltiesPending:'Tied — penalty shootout result pending',
     advancesLabel:'Advances',penaltyTieLabel:'Tied — penalty shootout winner:',notDefinedOption:'— Not set —',
@@ -682,7 +682,7 @@ const I18N = {
     teamAlreadyAssigned:'⚠️ {flag} {team} is already assigned to {name}',
     confirmResetTeams:'⚠️ Clear ALL assigned teams?\nThis lets you re-assign with the new FIFA system.\n\nPredictions and points are NOT deleted.',
     confirmDeleteResult:'Delete the result for match #{id}?',
-    confirmLoadOfficial:'Load the {total} official Group Stage results? This will overwrite any existing group-stage results.',
+    confirmLoadOfficial:'Load the {total} official results (Group Stage + Round of 32 + Round of 16 completed)? This will fill in all results up to date.',
     xlsSheetTabla:'🏆 Leaderboard',xlsSheetPredicciones:'⚽ Predictions',xlsSheetResultados:'📋 Results',
     xlsSheetParticipantes:'👥 Players',xlsSheetInfo:'ℹ️ Info',
     xlsColParticipante:'Player',xlsColEmail:'Email',xlsColEquipoSorteado:'Drawn Team',xlsColExactos:'Exact (3pts)',
@@ -766,7 +766,7 @@ const I18N = {
     corsProxy:'↪ Usando proxy CORS...',noMap:'⚠️ Sin mapeo:',
     updateDone:'✅ Listo:',updated:'actualizados',matchesInApi:'partidos en API',
     lastUpdate:'✅ Última actualización:',results:'resultados',
-    errCors:'❌ Error:',corsHint:'💡 Si falla el CORS, los resultados se pueden ingresar manualmente abajo.',
+    errCors:'❌ Error al conectar con football-data.org:',corsHint:'💡 Verifica que la API key sea válida (cuenta gratuita de football-data.org). También puedes ingresar los resultados manualmente abajo.',
     updateBtn:'🔄 Actualizar resultados ahora',
     penaltiesAdvance:'Avanza por penales',penaltiesPending:'Empate — definición por penales pendiente',
     advancesLabel:'Avanza',penaltyTieLabel:'Empate — ganador por penales:',notDefinedOption:'— Sin definir —',
@@ -775,7 +775,7 @@ const I18N = {
     teamAlreadyAssigned:'⚠️ {flag} {team} ya está asignado a {name}',
     confirmResetTeams:'⚠️ ¿Borrar TODOS los equipos asignados?\nEsto permite reasignar con el nuevo sistema FIFA.\n\nLas predicciones y puntos NO se borran.',
     confirmDeleteResult:'¿Borrar el resultado del partido #{id}?',
-    confirmLoadOfficial:'¿Cargar los {total} resultados oficiales de la Fase de Grupos? Esto sobrescribirá los resultados existentes de la fase de grupos.',
+    confirmLoadOfficial:'¿Cargar los {total} resultados oficiales (Fase de Grupos + Dieciseisavos + Octavos completados)? Se llenarán todos los resultados hasta la fecha.',
     xlsSheetTabla:'🏆 Tabla',xlsSheetPredicciones:'⚽ Predicciones',xlsSheetResultados:'📋 Resultados',
     xlsSheetParticipantes:'👥 Participantes',xlsSheetInfo:'ℹ️ Info',
     xlsColParticipante:'Participante',xlsColEmail:'Email',xlsColEquipoSorteado:'Equipo Sorteado',xlsColExactos:'Exactos (3pts)',
@@ -946,8 +946,29 @@ const OFFICIAL_RESULTS = {
   70:{home:0,away:1}, // Panamá 0-1 Croacia
   71:{home:0,away:2}, // Panamá 0-2 Inglaterra
   72:{home:2,away:1}, // Croacia 2-1 Ghana
-  /* DIECISEISAVOS (R32) — partido ya jugado */
-  73:{home:0,away:1}, // Sudáfrica 0-1 Canadá ✅ Dom 28 Jun
+  /* DIECISEISAVOS (R32) · 28 Jun – 3 Jul */
+  73:{home:0,away:1},                   // Sudáfrica 0-1 Canadá       ✅ Dom 28 Jun
+  74:{home:1,away:1,winner:'away'},     // Alemania 1-1 Paraguay       ✅ Lun 29 Jun (Paraguay gana 4-3 PKs)
+  75:{home:1,away:1,winner:'away'},     // Países Bajos 1-1 Marruecos  ✅ Lun 29 Jun (Marruecos gana 3-2 PKs)
+  76:{home:2,away:1},                   // Brasil 2-1 Japón             ✅ Lun 29 Jun
+  77:{home:3,away:0},                   // Francia 3-0 Suecia           ✅ Mar 30 Jun
+  78:{home:1,away:2},                   // Costa de Marfil 1-2 Noruega  ✅ Mar 30 Jun
+  79:{home:2,away:0},                   // México 2-0 Ecuador            ✅ Mar 30 Jun
+  80:{home:2,away:1},                   // Inglaterra 2-1 R.D. del Congo ✅ Mié 1 Jul
+  81:{home:2,away:0},                   // USA 2-0 Bosnia y Herz.        ✅ Mié 1 Jul
+  82:{home:1,away:1,winner:'home'},     // Bélgica 1-1 Senegal           ✅ Mié 1 Jul (Bélgica gana en prórroga 3-2)
+  83:{home:2,away:1},                   // Portugal 2-1 Croacia          ✅ Jue 2 Jul
+  84:{home:3,away:0},                   // España 3-0 Austria            ✅ Jue 2 Jul
+  85:{home:2,away:0},                   // Suiza 2-0 Argelia             ✅ Jue 2 Jul
+  86:{home:1,away:1,winner:'home'},     // Argentina 1-1 Cabo Verde      ✅ Vie 3 Jul (Argentina gana en prórroga)
+  87:{home:1,away:0},                   // Colombia 1-0 Ghana            ✅ Vie 3 Jul
+  88:{home:1,away:1,winner:'away'},     // Australia 1-1 Egipto          ✅ Vie 3 Jul (Egipto gana 4-2 PKs)
+  /* OCTAVOS DE FINAL (R16) · 4–7 Jul */
+  89:{home:0,away:1},                   // Paraguay 0-1 Francia          ✅ Sáb 4 Jul
+  90:{home:0,away:3},                   // Canadá 0-3 Marruecos          ✅ Sáb 4 Jul
+  91:{home:1,away:2},                   // Brasil 1-2 Noruega            ✅ Dom 5 Jul
+  92:{home:2,away:3},                   // México 2-3 Inglaterra         ✅ Dom 5 Jul
+  93:{home:0,away:1},                   // Portugal 0-1 España           ✅ Lun 6 Jul
 };
 
 let isAdmin = false;
@@ -1052,7 +1073,7 @@ const MATCHES = [
   // ── JUN 12 (Vie) ──
   {id:7,group:'B',phase:'Grupos',home:'Canadá',away:'Bosnia y Herz.',date:'Vie 12 Jun',venue:'BMO Field, Toronto',time:'15:00',tz:'Toronto'},
   {id:19,group:'D',phase:'Grupos',home:'USA',away:'Paraguay',date:'Vie 12 Jun',venue:'SoFi Stadium, Los Ángeles',time:'18:00',tz:'LA'},
-  {id:2,group:'A',phase:'Grupos',home:'Corea del Sur',away:'Rep. Checa',date:'Jue 11 Jun',venue:'Estadio Akron, Guadalajara',time:'20:00',tz:'GDL'},
+  {id:2,group:'A',phase:'Grupos',home:'Corea del Sur',away:'República Checa',date:'Jue 11 Jun',venue:'Estadio Akron, Guadalajara',time:'20:00',tz:'GDL'},
   // ── JUN 13 (Sáb) ──
   {id:8,group:'B',phase:'Grupos',home:'Qatar',away:'Suiza',date:'Sáb 13 Jun',venue:"Levi's Stadium, San Francisco",time:'12:00',tz:'SF'},
   {id:13,group:'C',phase:'Grupos',home:'Brasil',away:'Marruecos',date:'Sáb 13 Jun',venue:'MetLife Stadium, Nueva York/NJ',time:'18:00',tz:'NYC'},
@@ -1079,7 +1100,7 @@ const MATCHES = [
   {id:68,group:'L',phase:'Grupos',home:'Ghana',away:'Panamá',date:'Mié 17 Jun',venue:'BMO Field, Toronto',time:'19:00',tz:'Toronto'},
   {id:62,group:'K',phase:'Grupos',home:'Uzbekistán',away:'Colombia',date:'Mié 17 Jun',venue:'Estadio Azteca, CDMX',time:'20:00',tz:'CDMX'},
   // ── JUN 18 (Jue) ──
-  {id:3,group:'A',phase:'Grupos',home:'Rep. Checa',away:'Sudáfrica',date:'Jue 18 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
+  {id:3,group:'A',phase:'Grupos',home:'República Checa',away:'Sudáfrica',date:'Jue 18 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
   {id:9,group:'B',phase:'Grupos',home:'Suiza',away:'Bosnia y Herz.',date:'Jue 18 Jun',venue:'SoFi Stadium, Los Ángeles',time:'12:00',tz:'LA'},
   {id:10,group:'B',phase:'Grupos',home:'Canadá',away:'Qatar',date:'Jue 18 Jun',venue:'BC Place, Vancouver',time:'15:00',tz:'Vancouver'},
   {id:4,group:'A',phase:'Grupos',home:'México',away:'Corea del Sur',date:'Jue 18 Jun',venue:'Estadio Akron, Guadalajara',time:'19:00',tz:'GDL'},
@@ -1113,7 +1134,7 @@ const MATCHES = [
   {id:12,group:'B',phase:'Grupos',home:'Bosnia y Herz.',away:'Qatar',date:'Mié 24 Jun',venue:'Lumen Field, Seattle',time:'12:00',tz:'Seattle'},
   {id:17,group:'C',phase:'Grupos',home:'Escocia',away:'Brasil',date:'Mié 24 Jun',venue:'Hard Rock Stadium, Miami',time:'18:00',tz:'Miami'},
   {id:18,group:'C',phase:'Grupos',home:'Marruecos',away:'Haití',date:'Mié 24 Jun',venue:'Mercedes-Benz Stadium, Atlanta',time:'18:00',tz:'Atlanta'},
-  {id:5,group:'A',phase:'Grupos',home:'Rep. Checa',away:'México',date:'Mié 24 Jun',venue:'Estadio Azteca, CDMX',time:'19:00',tz:'CDMX'},
+  {id:5,group:'A',phase:'Grupos',home:'República Checa',away:'México',date:'Mié 24 Jun',venue:'Estadio Azteca, CDMX',time:'19:00',tz:'CDMX'},
   {id:6,group:'A',phase:'Grupos',home:'Sudáfrica',away:'Corea del Sur',date:'Mié 24 Jun',venue:'Estadio BBVA, Monterrey',time:'19:00',tz:'MTY'},
   // ── JUN 25 (Jue) ──
   {id:29,group:'E',phase:'Grupos',home:'Ecuador',away:'Alemania',date:'Jue 25 Jun',venue:'MetLife Stadium, Nueva York/NJ',time:'16:00',tz:'NYC'},
@@ -1333,7 +1354,7 @@ function localLoad() {
   const d = JSON.parse(localStorage.getItem('polla2026v5') || '{}');
   S.players = d.players || [];
   // Pre-seed with official results if no results stored yet
-  S.results = (d.results && Object.keys(d.results).length > 0) ? d.results : {...OFFICIAL_RESULTS};
+  S.results = Object.assign({...OFFICIAL_RESULTS}, (d.results && Object.keys(d.results).length > 0) ? d.results : {});
   S.predictions = d.predictions || {};
   S.champion = d.champion || null;
   // La fase activa ya NO se guarda/restaura — siempre se calcula en vivo
@@ -1346,7 +1367,7 @@ function attachListeners() {
   DB.ref(DB_PATH).on('value', snap => {
     const d = snap.val() || {};
     S.players = d.players ? Object.values(d.players) : [];
-    S.results = d.results || {};
+    S.results = Object.assign({...OFFICIAL_RESULTS}, d.results || {});
     S.predictions = d.predictions || {};
     S.champion = d.champion || null;
     // La fase activa ya NO viene de Firebase (era un estado global compartido
@@ -2146,12 +2167,12 @@ async function loadOfficialResults() {
     }
     if (btn) { btn.disabled = false; btn.textContent = '✅ Resultados cargados'; btn.style.background='var(--success)'; }
     setTimeout(() => {
-      if (btn) { btn.textContent = '📥 Cargar 72 resultados oficiales'; btn.style.background=''; btn.disabled = false; }
+      if (btn) { btn.textContent = '📥 Cargar 93 resultados oficiales'; btn.style.background=''; btn.disabled = false; }
       if (status) status.textContent = '';
     }, 4000);
   } catch(e) {
     if (status) status.textContent = '❌ Error: ' + e.message;
-    if (btn) { btn.disabled = false; btn.textContent = '📥 Cargar 72 resultados oficiales'; }
+    if (btn) { btn.disabled = false; btn.textContent = '📥 Cargar 93 resultados oficiales'; }
   }
 }
 
@@ -2536,12 +2557,23 @@ function translateTeamName(apiName) {
 function findPollaMatchByTeams(apiHome, apiAway) {
   const h = translateTeamName(apiHome);
   const a = translateTeamName(apiAway);
-  // Buscar match directo
+
+  // 1. Buscar en mapa directo (grupos + dieciseisavos con nombres reales en MATCHES)
   let match = POLLA_MATCH_MAP.find(m => m.home === h && m.away === a);
   if (match) return { match, inverted: false };
-  // Buscar invertido
   match = POLLA_MATCH_MAP.find(m => m.home === a && m.away === h);
   if (match) return { match, inverted: true };
+
+  // 2. Para eliminatorias (R16, cuartos, semis, final): buscar en nombres resueltos
+  // RESOLVED_NAMES se calcula dinámicamente a partir de los resultados de R32+
+  for (const [mid, names] of Object.entries(RESOLVED_NAMES)) {
+    const matchId = parseInt(mid);
+    const pollaMatch = MATCHES.find(m => m.id === matchId);
+    if (!pollaMatch) continue;
+    if (names.home === h && names.away === a) return { match: pollaMatch, inverted: false };
+    if (names.home === a && names.away === h) return { match: pollaMatch, inverted: true };
+  }
+
   return null;
 }
 
@@ -2567,6 +2599,9 @@ async function fetchAPIResults() {
   const status = document.getElementById('autoUpdateStatus');
   const log = document.getElementById('autoUpdateLog');
   
+  // Asegurar que los nombres del bracket estén actualizados antes de buscar
+  refreshResolvedNames();
+
   btn.disabled = true;
   btn.textContent = t('querying');
   status.textContent = '';
@@ -2574,12 +2609,26 @@ async function fetchAPIResults() {
   log.innerHTML = t('queryingApi') + '<br>';
 
   try {
-    // Llamar a la función serverless de Vercel — evita CORS completamente
-    const response = await fetch('/api/football');
-    if (!response.ok) throw new Error(`Error HTTP ${response.status}`);
+    // ─── Llamar directo a football-data.org (CORS habilitado en todos los tiers con key válida) ───
+    const FD_URL = `https://api.football-data.org/v4/competitions/WC/matches?season=2026`;
+    let response;
+
+    try {
+      response = await fetch(FD_URL, {
+        headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
+      });
+    } catch (directErr) {
+      // Si hay bloqueo de CORS, intentar con proxy público
+      log.innerHTML += `${t('corsProxy')}<br>`;
+      const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(FD_URL)}`;
+      response = await fetch(proxyUrl, {
+        headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
+      });
+    }
 
     if (!response.ok) {
-      throw new Error(`Error HTTP ${response.status}`);
+      const errBody = await response.text().catch(() => '');
+      throw new Error(`HTTP ${response.status}${errBody ? ': ' + errBody.slice(0,120) : ''}`);
     }
 
     const data = await response.json();
