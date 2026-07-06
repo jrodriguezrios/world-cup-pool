@@ -2609,21 +2609,29 @@ async function fetchAPIResults() {
   log.innerHTML = t('queryingApi') + '<br>';
 
   try {
-    // ─── Llamar directo a football-data.org (CORS habilitado en todos los tiers con key válida) ───
+    // ─── Estrategia de fetch en cascada ───────────────────────────────────────
+    // 1. /api/football   → función serverless Vercel (sin CORS, sin exponer key)
+    // 2. football-data.org directo → funciona si el host soporta CORS con API key
+    // 3. corsproxy.io    → proxy público como último recurso
+    // ─────────────────────────────────────────────────────────────────────────
     const FD_URL = `https://api.football-data.org/v4/competitions/WC/matches?season=2026`;
     let response;
 
+    // Intento 1: proxy serverless (Vercel)
     try {
-      response = await fetch(FD_URL, {
-        headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
-      });
-    } catch (directErr) {
-      // Si hay bloqueo de CORS, intentar con proxy público
-      log.innerHTML += `${t('corsProxy')}<br>`;
-      const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(FD_URL)}`;
-      response = await fetch(proxyUrl, {
-        headers: { 'X-Auth-Token': FOOTBALL_API_KEY }
-      });
+      const r = await fetch('/api/football');
+      if (r.ok) { response = r; }
+      else { throw new Error(`Proxy HTTP ${r.status}`); }
+    } catch (_) {
+      // Intento 2: directo a football-data.org
+      try {
+        response = await fetch(FD_URL, { headers: { 'X-Auth-Token': FOOTBALL_API_KEY } });
+      } catch (__) {
+        // Intento 3: proxy CORS público
+        log.innerHTML += `${t('corsProxy')}<br>`;
+        const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(FD_URL)}`;
+        response = await fetch(proxyUrl, { headers: { 'X-Auth-Token': FOOTBALL_API_KEY } });
+      }
     }
 
     if (!response.ok) {
