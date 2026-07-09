@@ -698,10 +698,10 @@ const I18N = {
     reportOptJpgTitle:'JPG Image',reportOptJpgDesc:'Download as image — perfect for sharing in Slack or WhatsApp.',
     reportOptPdfTitle:'PDF',reportOptPdfDesc:'Opens print dialog — save as PDF. Best for email or printing.',
     reportCancel:'Cancel',reportPopupBlocked:'Please allow popups for this site.',
-    reportNoMatches:'No matches today — rest day!',reportTodayMatches:"Today's Matches",
+    reportNoMatches:'No matches in this phase yet.',reportTodayMatches:'Matches',
     reportLockNote:'Predictions lock <strong>10 min before kickoff</strong> — world-cup-pool-nu.vercel.app',
     reportLeaderboard:'Leaderboard',reportColPlayer:'PLAYER',reportColTeam:'TEAM',reportColExact:'EXACT',
-    reportColWinner:'WINNER',reportColBonus:'BONUS',reportColTotal:'TOTAL',reportDailyLabel:'DAILY REPORT',
+    reportColWinner:'WINNER',reportColBonus:'BONUS',reportColTotal:'TOTAL',reportDailyLabel:'DAILY REPORT',reportTodayBadge:'TODAY',
     resetTeamsBtn:'🔄 Reset teams',resetTeamsTitle:'Clears all assigned teams so you can re-draw',
     backupExcelBtn:'💾 Excel Backup',backupExcelTitle:'Download a full backup as an Excel file',
     pubTitle:'🚀 How to publish the pool online',pubDesc:'So the whole team can access from their own devices with synced data.',
@@ -791,10 +791,10 @@ const I18N = {
     reportOptJpgTitle:'Imagen JPG',reportOptJpgDesc:'Descárgalo como imagen — perfecto para compartir en Slack o WhatsApp.',
     reportOptPdfTitle:'PDF',reportOptPdfDesc:'Abre el diálogo de impresión — guárdalo como PDF. Ideal para correo o impresión.',
     reportCancel:'Cancelar',reportPopupBlocked:'Por favor permite las ventanas emergentes para este sitio.',
-    reportNoMatches:'Sin partidos hoy — día de descanso!',reportTodayMatches:'Partidos de hoy',
+    reportNoMatches:'Sin partidos en esta fase todavía.',reportTodayMatches:'Partidos',
     reportLockNote:'Las predicciones se bloquean <strong>10 min antes del inicio</strong> — world-cup-pool-nu.vercel.app',
     reportLeaderboard:'Tabla de posiciones',reportColPlayer:'JUGADOR',reportColTeam:'EQUIPO',reportColExact:'EXACTOS',
-    reportColWinner:'GANADOR',reportColBonus:'BONUS',reportColTotal:'TOTAL',reportDailyLabel:'REPORTE DIARIO',
+    reportColWinner:'GANADOR',reportColBonus:'BONUS',reportColTotal:'TOTAL',reportDailyLabel:'REPORTE DIARIO',reportTodayBadge:'HOY',
     resetTeamsBtn:'🔄 Reset equipos',resetTeamsTitle:'Borra todos los equipos asignados para poder reasignar',
     backupExcelBtn:'💾 Backup Excel',backupExcelTitle:'Descargar backup completo en Excel',
     pubTitle:'🚀 Cómo publicar el pool en línea',pubDesc:'Para que todo el equipo acceda desde sus propios dispositivos con datos sincronizados.',
@@ -2775,15 +2775,34 @@ setInterval(() => {
 ═══════════════════════════════════════════ */
 const REPORT_TZ = -5; // Colombia UTC-5
 
-function getReportTodayMatches() {
+function getReportPhaseMatches() {
+  refreshResolvedNames();
+  const phase = getCurrentPhase();
   const now = new Date();
   const nowCol = new Date(now.getTime() + REPORT_TZ * 3600000);
   const todayStr = nowCol.toISOString().slice(0,10);
-  return MATCHES.filter(m => {
-    const utc = getMatchUTC(m);
-    const colDate = new Date(utc + REPORT_TZ * 3600000);
-    return colDate.toISOString().slice(0,10) === todayStr;
-  });
+  const matches = phaseMatches(phase)
+    .sort((a, b) => getMatchUTC(a) - getMatchUTC(b))
+    .map(m => {
+      const utc = getMatchUTC(m);
+      const colDate = new Date(utc + REPORT_TZ * 3600000);
+      return { ...m, isToday: colDate.toISOString().slice(0,10) === todayStr };
+    });
+  return { phase, matches };
+}
+
+// Renderiza el nombre resuelto de un equipo para el reporte (bandera + nombre,
+// o placeholder gris en cursiva si esa llave del bracket aún no se resolvió)
+function reportTeamHTML(rawName) {
+  const isPlaceholder = !rawName || rawName.includes('°') ||
+    /^(Gan\.|QF|SF|Perdedor|Ganador|Perd\.|Mejor)/.test(rawName);
+  if (isPlaceholder) {
+    return `<span style="color:#94A3B8;font-style:italic;font-weight:600;">${rawName || '?'}</span>`;
+  }
+  const hasEmoji = /^\p{Emoji}/u.test(rawName);
+  if (hasEmoji) return `<span style="font-weight:700;color:#001B4E;">${rawName}</span>`;
+  const f = flag(rawName);
+  return `<span style="font-weight:700;color:#001B4E;">${f ? f + ' ' : ''}${rawName}</span>`;
 }
 
 function getReportLeaderboard() {
@@ -2799,7 +2818,7 @@ function getReportLeaderboard() {
 }
 
 function buildReportHTML() {
-  const todayMatches = getReportTodayMatches();
+  const { phase: reportPhase, matches: phaseMatchList } = getReportPhaseMatches();
   const lb = getReportLeaderboard();
   const now = new Date();
   const nowCol = new Date(now.getTime() + REPORT_TZ * 3600000);
@@ -2811,18 +2830,27 @@ function buildReportHTML() {
   const initials = name => name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const colors = ['#003DA5','#D52B1E','#C8A84B','#059669','#7C3AED','#0891B2'];
 
-  const matchRows = todayMatches.length > 0
-    ? todayMatches.map(m => {
+  const matchRows = phaseMatchList.length > 0
+    ? phaseMatchList.map(m => {
         const utc = getMatchUTC(m);
         const colTime = new Date(utc + REPORT_TZ * 3600000);
         const hh = colTime.getUTCHours().toString().padStart(2,'0');
         const mm = colTime.getUTCMinutes().toString().padStart(2,'0');
-        const hf = FLAG_MAP[m.home]||''; const af = FLAG_MAP[m.away]||'';
+        const homeDisp = reportTeamHTML(getTeamName(m.id, 'home'));
+        const awayDisp = reportTeamHTML(getTeamName(m.id, 'away'));
+        const res = S.results[m.id];
+        const hasRes = res && res.home !== undefined;
+        const centerCell = hasRes
+          ? `<span style="font-weight:700;color:#003DA5;font-size:14px;">${res.home} – ${res.away}</span>`
+          : `<span style="color:#94A3B8;font-weight:700;">VS</span>`;
+        const todayBadge = m.isToday
+          ? `<span style="background:#D52B1E;color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:6px;">${t('reportTodayBadge')}</span>`
+          : '';
         return `<tr style="border-bottom:1px solid #EEF2FF;">
-          <td style="padding:10px 12px;"><span style="background:#EEF2FF;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#003DA5;">Grp ${m.group} · ${hh}:${mm}</span></td>
-          <td style="padding:10px 12px;font-weight:700;color:#001B4E;">${hf} ${m.home}</td>
-          <td style="padding:10px 12px;text-align:center;color:#94A3B8;font-weight:700;">VS</td>
-          <td style="padding:10px 12px;font-weight:700;color:#001B4E;">${m.away} ${af}</td>
+          <td style="padding:10px 12px;"><span style="background:#EEF2FF;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:#003DA5;">${m.date} · ${hh}:${mm}</span>${todayBadge}</td>
+          <td style="padding:10px 12px;">${homeDisp}</td>
+          <td style="padding:10px 12px;text-align:center;">${centerCell}</td>
+          <td style="padding:10px 12px;">${awayDisp}</td>
           <td style="padding:10px 12px;font-size:11px;color:#94A3B8;">${m.venue.split(',')[0]}</td>
         </tr>`;
       }).join('')
@@ -2865,11 +2893,11 @@ function buildReportHTML() {
     </div>
   </div>
   <div style="background:#F0F4FF;padding:20px 28px;">
-    <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">${t('reportTodayMatches')}</div>
+    <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">${t('reportTodayMatches')} — ${reportPhase.toUpperCase()}</div>
     <table style="width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;">
       ${matchRows}
     </table>
-    ${todayMatches.length > 0 ? `<div style="background:#FFF3CD;border:1px solid #C8A84B;border-radius:8px;padding:8px 14px;margin-top:10px;font-size:12px;color:#856404;">${t('reportLockNote')}</div>` : ''}
+    ${phaseMatchList.length > 0 ? `<div style="background:#FFF3CD;border:1px solid #C8A84B;border-radius:8px;padding:8px 14px;margin-top:10px;font-size:12px;color:#856404;">${t('reportLockNote')}</div>` : ''}
   </div>
   <div style="background:white;padding:20px 28px;">
     <div style="font-size:11px;font-weight:700;color:#003DA5;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">${t('reportLeaderboard')}</div>
