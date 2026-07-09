@@ -503,15 +503,15 @@ select option{background:white;}
       <!-- ══ CARGA OFICIAL DE RESULTADOS ══ -->
       <div class="card" style="border-left:4px solid var(--wc-gold);background:linear-gradient(135deg,rgba(200,168,75,0.05),rgba(0,61,165,0.03));">
         <div class="card-title" style="color:var(--gold)">⚽ Resultados Oficiales — Fase de Grupos</div>
-        <div class="card-sub" style="margin-bottom:12px">Carga los <strong>93 resultados</strong> reales (Fase de Grupos + Dieciseisavos + Octavos completados) con un solo clic. Se sincronizan para todos los participantes.</div>
+        <div class="card-sub" style="margin-bottom:12px">Carga los <strong>96 resultados</strong> reales (Fase de Grupos + Dieciseisavos + Octavos de Final completados) con un solo clic. Se sincronizan para todos los participantes.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-gold" onclick="loadOfficialResults()" style="font-size:14px;padding:10px 20px;">
-            📥 Cargar 93 resultados oficiales
+            📥 Cargar 96 resultados oficiales
           </button>
           <span id="officialLoadStatus" style="font-size:12px;color:var(--text3)"></span>
         </div>
         <div style="margin-top:10px;font-size:11px;color:var(--text3);line-height:1.6;">
-          Fuente: FIFA · ESPN · UEFA · Actualizado 29 Jun 2026
+          Fuente: FIFA · ESPN · UEFA · Actualizado 9 Jul 2026
         </div>
       </div>
       <div class="card" style="border-left:4px solid var(--wc-red);">
@@ -969,6 +969,9 @@ const OFFICIAL_RESULTS = {
   91:{home:1,away:2},                   // Brasil 1-2 Noruega            ✅ Dom 5 Jul
   92:{home:2,away:3},                   // México 2-3 Inglaterra         ✅ Dom 5 Jul
   93:{home:0,away:1},                   // Portugal 0-1 España           ✅ Lun 6 Jul
+  94:{home:1,away:4},                   // USA 1-4 Bélgica               ✅ Lun 6 Jul (Seattle)
+  95:{home:3,away:2},                   // Argentina 3-2 Egipto          ✅ Mar 7 Jul (Atlanta) — remontada de 0-2 en el 2° tiempo
+  96:{home:0,away:0,winner:'home'},     // Suiza 0-0 Colombia            ✅ Mar 7 Jul (Vancouver, Suiza gana 4-3 en penales)
 };
 
 let isAdmin = false;
@@ -1987,12 +1990,28 @@ function renderResultList() {
   const withResult    = allMatches.filter(m => { const r = S.results[m.id]; return r && r.home !== undefined && r.away !== undefined; });
   const withoutResult = allMatches.filter(m => { const r = S.results[m.id]; return !r || r.home === undefined; });
 
+  // Auto-detectar campeón desde el resultado de la Final (M104), para que el
+  // admin solo tenga que confirmar con un clic en vez de escribirlo a mano
+  // (evita que el bonus +10 se quede sin activar por olvido).
+  let autoChampion = null;
+  if (resPhase === 'Final' && !S.champion) {
+    const res104 = S.results[104];
+    const nm104 = RESOLVED_NAMES[104] || {};
+    if (res104 && res104.home !== undefined) {
+      if (res104.home > res104.away) autoChampion = nm104.home;
+      else if (res104.away > res104.home) autoChampion = nm104.away;
+      else if (res104.winner === 'home') autoChampion = nm104.home;
+      else if (res104.winner === 'away') autoChampion = nm104.away;
+    }
+  }
+
   const champ = resPhase === 'Final' ? `
     <div class="card" style="border-left:4px solid var(--wc-gold);">
       <div class="card-title" style="color:var(--gold)">${t('champTitle')}</div>
       <div class="card-sub">${t('champDesc')}</div>
+      ${autoChampion ? `<div style="font-size:12px;color:var(--success);font-weight:600;margin-bottom:8px">✅ Detectado automáticamente por el resultado de la Final: <strong>${autoChampion}</strong> — confirma para activar el bonus +10 pts.</div>` : ''}
       <div style="display:flex;gap:8px;align-items:center;">
-        <input type="text" id="champInput" placeholder="${t('champPh')}" value="${S.champion||''}" style="flex:1">
+        <input type="text" id="champInput" placeholder="${t('champPh')}" value="${S.champion || autoChampion || ''}" style="flex:1">
         <button class="btn btn-gold" onclick="saveChampion()">${t('champSave')}</button>
       </div>
       ${S.champion ? `<div style="margin-top:10px;font-size:14px;color:var(--gold)">${t('champion')} <strong>${S.champion}</strong></div>` : ''}
@@ -2167,12 +2186,12 @@ async function loadOfficialResults() {
     }
     if (btn) { btn.disabled = false; btn.textContent = '✅ Resultados cargados'; btn.style.background='var(--success)'; }
     setTimeout(() => {
-      if (btn) { btn.textContent = '📥 Cargar 93 resultados oficiales'; btn.style.background=''; btn.disabled = false; }
+      if (btn) { btn.textContent = '📥 Cargar 96 resultados oficiales'; btn.style.background=''; btn.disabled = false; }
       if (status) status.textContent = '';
     }, 4000);
   } catch(e) {
     if (status) status.textContent = '❌ Error: ' + e.message;
-    if (btn) { btn.disabled = false; btn.textContent = '📥 Cargar 93 resultados oficiales'; }
+    if (btn) { btn.disabled = false; btn.textContent = '📥 Cargar 96 resultados oficiales'; }
   }
 }
 
@@ -2386,7 +2405,10 @@ function resolveKnockoutNames() {
     if (!res || res.home === undefined) return null;
     if (res.home > res.away) return hName;
     if (res.away > res.home) return aName;
-    return null;
+    // Empate en 90'/120' → ganador por penales (ej. Suiza 0-0 Colombia → Suiza avanza)
+    if (res.winner === 'home') return hName;
+    if (res.winner === 'away') return aName;
+    return null; // empate sin definir → bracket pendiente
   }
 
   Object.entries(qfRules).forEach(([mid, rule]) => {
