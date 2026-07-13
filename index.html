@@ -503,10 +503,10 @@ select option{background:white;}
       <!-- ══ CARGA OFICIAL DE RESULTADOS ══ -->
       <div class="card" style="border-left:4px solid var(--wc-gold);background:linear-gradient(135deg,rgba(200,168,75,0.05),rgba(0,61,165,0.03));">
         <div class="card-title" style="color:var(--gold)">⚽ Resultados Oficiales — Fase de Grupos</div>
-        <div class="card-sub" style="margin-bottom:12px">Carga los <strong>96 resultados</strong> reales (Fase de Grupos + Dieciseisavos + Octavos de Final completados) con un solo clic. Se sincronizan para todos los participantes.</div>
+        <div class="card-sub" style="margin-bottom:12px">Carga los <strong>100 resultados</strong> reales (Grupos + Dieciseisavos + Octavos + Cuartos completados) con un solo clic. Se sincronizan para todos los participantes.</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-gold" onclick="loadOfficialResults()" style="font-size:14px;padding:10px 20px;">
-            📥 Cargar 96 resultados oficiales
+            📥 Cargar 100 resultados oficiales
           </button>
           <span id="officialLoadStatus" style="font-size:12px;color:var(--text3)"></span>
         </div>
@@ -639,7 +639,7 @@ const I18N = {
     scoreBonus:'Your drawn team<br>wins the World Cup 🏆',
     predOf:'📊 Predictions of:',myPredBadge:'✓ My predictions',myPredLabel:'📊 My predictions',myPredOnly:'✓ Only yours',
     autoUpdateTitle:'🤖 Automatic updates',autoUpdateDesc:'Results are fetched automatically from football-data.org every 5 minutes. You can also force a manual update.',
-    autoUpdateNote:'⚠️ <strong>Knockout rounds:</strong> prediction points are always calculated using the <strong>90-minute</strong> score, even if the match is later decided by extra time or penalties. If it was tied at 90\' and went to penalties, the team advancing to the next round is marked separately (automatic when synced from the API, or with the "🥅 Tied — penalty winner" selector if entered manually) and does not affect anyone\'s points.',
+    autoUpdateNote:'⚠️ <strong>Knockout rounds:</strong> prediction points are always calculated using the <strong>90-minute</strong> score. A draw is a draw — extra time or penalties do not change the score used for points. The "🥅 Tied — penalty winner" selector only registers who advances to the next round in the bracket, and does not affect anyone\'s points.',
     autoUpdateBtn:'🔄 Update results now',resultsTitle:'📋 Official results',
     resultsDesc:'Auto results appear here. You can also manually enter or correct scores.',
     lbTitle:'🏆 Leaderboard',lbRefresh:'Refresh',lbPlayer:'Player',lbTeam:'Team',lbExact:'Exact',lbWinner:'Winner',
@@ -682,7 +682,7 @@ const I18N = {
     teamAlreadyAssigned:'⚠️ {flag} {team} is already assigned to {name}',
     confirmResetTeams:'⚠️ Clear ALL assigned teams?\nThis lets you re-assign with the new FIFA system.\n\nPredictions and points are NOT deleted.',
     confirmDeleteResult:'Delete the result for match #{id}?',
-    confirmLoadOfficial:'Load the {total} official results (Group Stage + Round of 32 + Round of 16 completed)? This will fill in all results up to date.',
+    confirmLoadOfficial:'Load the {total} official results (Group Stage + Round of 32 + Round of 16 + Quarterfinals completed)? This will fill in all results up to date.',
     xlsSheetTabla:'🏆 Leaderboard',xlsSheetPredicciones:'⚽ Predictions',xlsSheetResultados:'📋 Results',
     xlsSheetParticipantes:'👥 Players',xlsSheetInfo:'ℹ️ Info',
     xlsColParticipante:'Player',xlsColEmail:'Email',xlsColEquipoSorteado:'Drawn Team',xlsColExactos:'Exact (3pts)',
@@ -733,7 +733,7 @@ const I18N = {
     scoreBonus:'Tu equipo sorteado<br>gana el Mundial 🏆',
     predOf:'📊 Predicciones de:',myPredBadge:'✓ Mis predicciones',myPredLabel:'📊 Mis predicciones',myPredOnly:'✓ Solo las tuyas',
     autoUpdateTitle:'🤖 Actualización automática',autoUpdateDesc:'Los resultados se traen automáticamente de football-data.org cada 5 minutos. También puedes forzar una actualización manual.',
-    autoUpdateNote:'⚠️ <strong>Eliminatorias:</strong> los puntos de predicción siempre se calculan con el marcador de los <strong>90 minutos</strong>, aunque el partido se decida después por tiempo extra o penales. Si hubo empate a los 90\' y el partido fue a penales, el equipo que avanza a la siguiente ronda se marca por separado (automático si viene de la API, o con el selector "🥅 Empate — ganador por penales" si lo ingresas a mano) y no afecta los puntos de nadie.',
+    autoUpdateNote:'⚠️ <strong>Eliminatorias:</strong> los puntos siempre se calculan con el marcador de los <strong>90 minutos</strong>. Empate es empate — el tiempo extra o los penales no cambian el marcador para efectos de puntos. El selector "🥅 Empate — ganador por penales" solo registra quién avanza en el bracket y no afecta los puntos de nadie.',
     autoUpdateBtn:'🔄 Actualizar resultados ahora',resultsTitle:'📋 Resultados oficiales',
     resultsDesc:'Los resultados automáticos aparecen aquí. También puedes corregir o ingresar marcadores manualmente.',
     lbTitle:'🏆 Tabla de posiciones',lbRefresh:'Actualizar',lbPlayer:'Participante',lbTeam:'Equipo',lbExact:'Exactos',lbWinner:'Ganador',
@@ -775,7 +775,7 @@ const I18N = {
     teamAlreadyAssigned:'⚠️ {flag} {team} ya está asignado a {name}',
     confirmResetTeams:'⚠️ ¿Borrar TODOS los equipos asignados?\nEsto permite reasignar con el nuevo sistema FIFA.\n\nLas predicciones y puntos NO se borran.',
     confirmDeleteResult:'¿Borrar el resultado del partido #{id}?',
-    confirmLoadOfficial:'¿Cargar los {total} resultados oficiales (Fase de Grupos + Dieciseisavos + Octavos completados)? Se llenarán todos los resultados hasta la fecha.',
+    confirmLoadOfficial:'¿Cargar los {total} resultados oficiales (Grupos + Dieciseisavos + Octavos + Cuartos completados)? Se llenarán todos los resultados hasta la fecha.',
     xlsSheetTabla:'🏆 Tabla',xlsSheetPredicciones:'⚽ Predicciones',xlsSheetResultados:'📋 Resultados',
     xlsSheetParticipantes:'👥 Participantes',xlsSheetInfo:'ℹ️ Info',
     xlsColParticipante:'Participante',xlsColEmail:'Email',xlsColEquipoSorteado:'Equipo Sorteado',xlsColExactos:'Exactos (3pts)',
@@ -972,6 +972,11 @@ const OFFICIAL_RESULTS = {
   94:{home:1,away:4},                   // USA 1-4 Bélgica               ✅ Lun 6 Jul (Seattle)
   95:{home:3,away:2},                   // Argentina 3-2 Egipto          ✅ Mar 7 Jul (Atlanta) — remontada de 0-2 en el 2° tiempo
   96:{home:0,away:0,winner:'home'},     // Suiza 0-0 Colombia            ✅ Mar 7 Jul (Vancouver, Suiza gana 4-3 en penales)
+  /* CUARTOS DE FINAL · 9–11 Jul */
+  97:{home:2,away:0},  // Francia 2-0 Marruecos           ✅ Jue 9 Jul (Boston)
+  98:{home:2,away:1},  // España 2-1 Bélgica              ✅ Vie 10 Jul (Los Ángeles)
+  99:{home:1,away:2},  // Noruega 1-2 Inglaterra (a.e.t.) ✅ Sáb 11 Jul (Miami)
+  100:{home:3,away:1}, // Argentina 3-1 Suiza (a.e.t.)    ✅ Sáb 11 Jul (Kansas City)
 };
 
 let isAdmin = false;
@@ -1188,13 +1193,13 @@ const MATCHES = [
   {id:95,group:'R16',phase:'Octavos de Final',home:'Gan. M86',away:'Gan. M88',date:'Mar 7 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'12:00',tz:'Atlanta'},
   {id:96,group:'R16',phase:'Octavos de Final',home:'Gan. M85',away:'Gan. M87',date:'Mar 7 Jul',venue:'BC Place, Vancouver',time:'13:00',tz:'Vancouver'},
   // ═══ CUARTOS DE FINAL · 9–11 Jul ═══
-  {id:97,group:'CF',phase:'Cuartos de Final',home:'Gan. M89',away:'Gan. M90',date:'Jue 9 Jul',venue:'Gillette Stadium, Boston',time:'16:00',tz:'Boston'},
-  {id:98,group:'CF',phase:'Cuartos de Final',home:'Gan. M93',away:'Gan. M94',date:'Vie 10 Jul',venue:'SoFi Stadium, Los Ángeles',time:'12:00',tz:'LA'},
-  {id:99,group:'CF',phase:'Cuartos de Final',home:'Gan. M91',away:'Gan. M92',date:'Sáb 11 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
-  {id:100,group:'CF',phase:'Cuartos de Final',home:'Gan. M95',away:'Gan. M96',date:'Sáb 11 Jul',venue:'Arrowhead Stadium, Kansas City',time:'20:00',tz:'KC'},
+  {id:97,group:'CF',phase:'Cuartos de Final',home:'Francia',away:'Marruecos',date:'Jue 9 Jul',venue:'Gillette Stadium, Boston',time:'16:00',tz:'Boston'},
+  {id:98,group:'CF',phase:'Cuartos de Final',home:'España',away:'Bélgica',date:'Vie 10 Jul',venue:'SoFi Stadium, Los Ángeles',time:'12:00',tz:'LA'},
+  {id:99,group:'CF',phase:'Cuartos de Final',home:'Noruega',away:'Inglaterra',date:'Sáb 11 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
+  {id:100,group:'CF',phase:'Cuartos de Final',home:'Argentina',away:'Suiza',date:'Sáb 11 Jul',venue:'Arrowhead Stadium, Kansas City',time:'20:00',tz:'KC'},
   // ═══ SEMIFINALES · 14–15 Jul ═══
-  {id:101,group:'SF',phase:'Semifinales',home:'Gan. M97',away:'Gan. M98',date:'Lun 14 Jul',venue:'AT&T Stadium, Dallas',time:'14:00',tz:'Dallas'},
-  {id:102,group:'SF',phase:'Semifinales',home:'Gan. M99',away:'Gan. M100',date:'Mar 15 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'15:00',tz:'Atlanta'},
+  {id:101,group:'SF',phase:'Semifinales',home:'Francia',away:'España',date:'Mar 14 Jul',venue:'AT&T Stadium, Dallas',time:'14:00',tz:'Dallas'},
+  {id:102,group:'SF',phase:'Semifinales',home:'Inglaterra',away:'Argentina',date:'Mié 15 Jul',venue:'Mercedes-Benz Stadium, Atlanta',time:'15:00',tz:'Atlanta'},
   // ═══ TERCER PUESTO y FINAL ═══
   {id:103,group:'3P',phase:'Tercer puesto',home:'Perd. M101',away:'Perd. M102',date:'Sáb 18 Jul',venue:'Hard Rock Stadium, Miami',time:'17:00',tz:'Miami'},
   {id:104,group:'FIN',phase:'Final',home:'Gan. M101',away:'Gan. M102',date:'Dom 19 Jul',venue:'MetLife Stadium, Nueva York/NJ',time:'15:00',tz:'NYC'},
@@ -1351,13 +1356,35 @@ function tryRestoreFirebase() {
   startApp();
 }
 
+/* ─── MERGE DE RESULTADOS ───────────────────────────────────────────
+   Combina OFFICIAL_RESULTS (fuente de verdad para 1-96) con
+   resultados de Firebase. Si Firebase trae un marcador empatado SIN
+   campo winner, pero OFFICIAL_RESULTS si lo tiene, se preserva el
+   winner oficial para que calcPts asigne 1 pt al ganador en penales.
+─────────────────────────────────────────────────────────────────── */
+function mergeResults(official, firebase) {
+  const out = {...official};
+  Object.entries(firebase || {}).forEach(([k, v]) => {
+    if (!v || v.home === undefined) return;
+    const numK = parseInt(k);
+    const off  = official[numK] !== undefined ? official[numK] : official[k];
+    // Para empates sin winner en Firebase: heredar winner del oficial
+    if (off && off.winner && v.home === v.away && !v.winner) {
+      out[numK] = {...v, winner: off.winner};
+    } else {
+      out[numK] = v;
+    }
+  });
+  return out;
+}
+
 /* ─── SAVE / LOAD ─── */
 function localSave() { try { localStorage.setItem('polla2026v5', JSON.stringify(S)); } catch(e) {} }
 function localLoad() {
   const d = JSON.parse(localStorage.getItem('polla2026v5') || '{}');
   S.players = d.players || [];
   // Pre-seed with official results if no results stored yet
-  S.results = Object.assign({...OFFICIAL_RESULTS}, (d.results && Object.keys(d.results).length > 0) ? d.results : {});
+  S.results = mergeResults({...OFFICIAL_RESULTS}, (d.results && Object.keys(d.results).length > 0) ? d.results : {});
   S.predictions = d.predictions || {};
   S.champion = d.champion || null;
   // La fase activa ya NO se guarda/restaura — siempre se calcula en vivo
@@ -1370,7 +1397,7 @@ function attachListeners() {
   DB.ref(DB_PATH).on('value', snap => {
     const d = snap.val() || {};
     S.players = d.players ? Object.values(d.players) : [];
-    S.results = Object.assign({...OFFICIAL_RESULTS}, d.results || {});
+    S.results = mergeResults({...OFFICIAL_RESULTS}, d.results || {});
     S.predictions = d.predictions || {};
     S.champion = d.champion || null;
     // La fase activa ya NO viene de Firebase (era un estado global compartido
@@ -2186,12 +2213,12 @@ async function loadOfficialResults() {
     }
     if (btn) { btn.disabled = false; btn.textContent = '✅ Resultados cargados'; btn.style.background='var(--success)'; }
     setTimeout(() => {
-      if (btn) { btn.textContent = '📥 Cargar 96 resultados oficiales'; btn.style.background=''; btn.disabled = false; }
+      if (btn) { btn.textContent = '📥 Cargar 100 resultados oficiales'; btn.style.background=''; btn.disabled = false; }
       if (status) status.textContent = '';
     }, 4000);
   } catch(e) {
     if (status) status.textContent = '❌ Error: ' + e.message;
-    if (btn) { btn.disabled = false; btn.textContent = '📥 Cargar 96 resultados oficiales'; }
+    if (btn) { btn.disabled = false; btn.textContent = '📥 Cargar 100 resultados oficiales'; }
   }
 }
 
@@ -2473,6 +2500,7 @@ function getTeamName(matchId, side) {
 
 /* ─── TABLA ─── */
 function calcPts(pred, res) {
+  // Política: puntos siempre con marcador de 90 minutos. Empate es empate.
   if (pred.home === res.home && pred.away === res.away) return 3;
   const pw = pred.home > pred.away ? 1 : pred.home < pred.away ? -1 : 0;
   const rw = res.home > res.away ? 1 : res.home < res.away ? -1 : 0;
